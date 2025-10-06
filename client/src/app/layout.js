@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Mgl student donations",
-  description: "A platform for MGL students to donate to children",
+  title: "Brilliant Minds Global",
+  description: "A platform for charity and donations for children",
 };
 
 export default function RootLayout({ children }) {
