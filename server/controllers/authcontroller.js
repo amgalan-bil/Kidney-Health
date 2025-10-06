@@ -37,17 +37,27 @@ export const register = async (req, res) => {
       path: "/",
     });
 
-    //sending welcome mail
+    // Immediately send a success response
+    res.json({ success: true });
+
+    // Send welcome mail in the background without blocking the response
     const mailOptions = {
       from: process.env.SENDER_EMAIL,
       to: email,
       subject: "Welcome",
       text: `Welcome. Your account has been created with email id: ${email}`,
     };
-    await transporter.sendMail(mailOptions);
-    return res.json({ success: true });
+
+    // We don't 'await' this. We send the email but don't make the user wait.
+    // Add a .catch to log any errors so the server doesn't crash.
+    transporter.sendMail(mailOptions).catch((err) => {
+      console.error("Failed to send welcome email:", err);
+    });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    // This will only catch errors before the response is sent
+    if (!res.headersSent) {
+      res.json({ success: false, message: error.message });
+    }
   }
 };
 
