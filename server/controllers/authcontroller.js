@@ -133,21 +133,27 @@ export const sendVerifyOtp = async (req, res) => {
 
     await user.save();
 
+    // Respond to the client immediately
+    res.json({ success: true, message: "Verification otp sent on email." });
+
     const mailOptions = {
       from: process.env.SENDER_EMAIL,
       to: user.email,
       subject: "Account verification OTP",
-      // text: `Your OTP is ${otp}. verify your account using this OTP`,
       html: EMAIL_VERIFY_TEMPLATE.replace("{{otp}}", otp).replace(
         "{{email}}",
         user.email
       ),
     };
-    await transporter.sendMail(mailOptions);
 
-    res.json({ success: true, message: "Verification otp sent on email." });
+    // Send email in the background
+    transporter.sendMail(mailOptions).catch((err) => {
+      console.error("Failed to send verification email:", err);
+    });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    if (!res.headersSent) {
+      res.json({ success: false, message: error.message });
+    }
   }
 };
 
@@ -211,21 +217,27 @@ export const sendResetOtp = async (req, res) => {
 
     await user.save();
 
+    // Respond to the client immediately
+    res.json({ success: true, message: "OTP sent to your mail" });
+
     const mailOptions = {
       from: process.env.SENDER_EMAIL,
       to: user.email,
       subject: "Password Reset OTP",
-      // text: `Your OTP for reseting your password is ${otp}. verify your account using this OTP`,
       html: PASSWORD_RESET_TEMPLATE.replace("{{otp}}", otp).replace(
         "{{email}}",
         user.email
       ),
     };
-    await transporter.sendMail(mailOptions);
 
-    return res.json({ success: true, message: "OTP sent to your mail" });
+    // Send email in the background
+    transporter.sendMail(mailOptions).catch((err) => {
+      console.error("Failed to send password reset email:", err);
+    });
   } catch (error) {
-    return res.json({ success: false, message: error.message });
+    if (!res.headersSent) {
+      return res.json({ success: false, message: error.message });
+    }
   }
 };
 
