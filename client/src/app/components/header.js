@@ -15,13 +15,7 @@ const Header = () => {
           height={60}
           className="h-auto w-16 sm:w-24 pointer-events-none"
         />
-        <Image
-          src="/images/mentorship2025.jpg"
-          alt="mentorship2025"
-          width={120}
-          height={60}
-          className="h-auto w-20 sm:w-32 pointer-events-none"
-        />
+        <p className="">Менторшип – 2025 Үндэсний хөтөлбөр</p>
       </div>
       <Image
         src={"/images/donation.jpg"}

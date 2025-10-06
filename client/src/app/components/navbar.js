@@ -134,13 +134,15 @@ const Navbar = () => {
             </button>
           </div>
           <div className="flex flex-col gap-y-6">
-            <div className="flex items-center gap-2 border-b pb-4">
-              <AccountCircleIcon
-                fontSize="large"
-                className="h-9 w-9  text-teal-600 "
-              />{" "}
-              <p className="text-black"> {userData?.name}</p>
-            </div>
+            {userData && (
+              <div className="flex items-center gap-2 border-b pb-4">
+                <AccountCircleIcon
+                  fontSize="large"
+                  className="h-9 w-9  text-teal-600 "
+                />{" "}
+                <p className="text-black"> {userData?.name}</p>
+              </div>
+            )}
             <Link
               href="/donate"
               onClick={() => setIsMobileMenuOpen(false)}

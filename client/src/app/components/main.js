@@ -41,7 +41,7 @@ export default function Main() {
           </h2>
           <ul className="text-gray-700 space-y-1">
             <li>The Brilliant Minds Global, ТББ</li>
-            <li>Менторшип – 2025 үндэсний хөтөлбөр</li>
+            <li>Менторшип – 2025 Үндэсний хөтөлбөр</li>
             <li>Los Angeles Mongolian Student Union</li>
           </ul>
         </div>

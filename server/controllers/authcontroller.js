@@ -202,7 +202,11 @@ export const isAuthenticated = async (req, res) => {
 
 export const sendResetOtp = async (req, res) => {
   const { email } = req.body;
+  console.log("email", email);
+  
   if (!email) {
+    console.log("no email");
+    
     return res.json({ success: false, message: "Email is required" });
   }
   try {
@@ -219,6 +223,8 @@ export const sendResetOtp = async (req, res) => {
 
     // Respond to the client immediately
     res.json({ success: true, message: "OTP sent to your mail" });
+
+    
 
     const mailOptions = {
       from: process.env.SENDER_EMAIL,
