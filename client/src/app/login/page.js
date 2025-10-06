@@ -24,6 +24,9 @@ const Login = () => {
           password,
         });
 
+        console.log('data', data);
+        
+
         if (data.success) {
           setIsLoggedin(true);
           getUserData();

@@ -48,7 +48,7 @@ const AuthNav = () => {
           <div className="absolute left-0 md:right-0 md:left-auto mt-2 w-56 bg-white rounded-lg shadow-xl py-1 z-50 ring-1 ring-black ring-opacity-5">
             <div className="px-4 py-3 border-b border-gray-200">
               <p className="text-base font-medium text-gray-800 truncate">
-                {userData.name}
+                {userData?.name}
               </p>
             </div>
             <button
@@ -139,7 +139,7 @@ const Navbar = () => {
                 fontSize="large"
                 className="h-9 w-9  text-teal-600 "
               />{" "}
-              <p className="text-black"> {userData.name}</p>
+              <p className="text-black"> {userData?.name}</p>
             </div>
             <Link
               href="/donate"
@@ -149,13 +149,23 @@ const Navbar = () => {
               <VolunteerActivismIcon fontSize="small" />
               <span>Хандив өгөх</span>
             </Link>
-            <button
-              className="w-full py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors bg-red-600 hover:bg-red-700 text-white"
-              onClick={logout}
-            >
-              <LogoutIcon fontSize="small" />
-              sign out
-            </button>
+            {userData ? (
+              <button
+                className="w-full py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors bg-red-600 hover:bg-red-700 text-white"
+                onClick={logout}
+              >
+                <LogoutIcon fontSize="small" />
+                sign out
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors bg-teal-600 hover:bg-teal-700 text-white"
+              >
+                Login
+              </Link>
+            )}
           </div>
         </div>
       )}
