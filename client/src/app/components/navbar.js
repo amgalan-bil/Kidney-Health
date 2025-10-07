@@ -6,10 +6,13 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import LogoutIcon from "@mui/icons-material/Logout";
+import EditIcon from "@mui/icons-material/Edit";
 import { AppContent } from "../context/AppContext";
 import { CircularProgress } from "@mui/material";
+import Image from "next/image";
+import GoalModal from "./goalModal";
 
-const AuthNav = () => {
+const AuthNav = ({ onSetGoalClick }) => {
   const { userData, logout, loading } = useContext(AppContent);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
@@ -50,7 +53,20 @@ const AuthNav = () => {
               <p className="text-base font-medium text-gray-800 truncate">
                 {userData?.name}
               </p>
+              <p className="text-sm text-gray-500">
+                My goal: ${userData.goal?.toLocaleString() || 0}
+              </p>
             </div>
+            <button
+              onClick={() => {
+                onSetGoalClick();
+                setIsProfileMenuOpen(false);
+              }}
+              className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+            >
+              <EditIcon fontSize="small" />
+              <span>Set Goal</span>
+            </button>
             <button
               onClick={logout}
               className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
@@ -67,29 +83,37 @@ const AuthNav = () => {
   return (
     <Link
       href="/login"
-      className="py-2 px-3 font-medium text-gray-600 hover:text-teal-600 transition-colors"
+      className="inline-flex items-center justify-center px-6 py-3 border border-blue-600 text-base font-medium rounded-md text-blue-600 gap-2"
     >
-      Login
+      Нэвтрэх
     </Link>
   );
 };
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { userData, logout, loading } = useContext(AppContent);
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const { userData, logout, updateUserGoal } = useContext(AppContent);
 
   return (
     <>
-      <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-40">
+      <nav className="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex-shrink-0">
               <Link
                 href="/"
-                className="text-2xl font-bold text-teal-600 hover:text-teal-700 transition-colors"
+                className=" flex flex-row items-center justify-center gap-2 text-2xl font-bold text-black transition-colors"
               >
-                Smiles for Mongolia
+                <Image
+                  src="/icon.jpg"
+                  alt="Brilliant Minds Global Logo"
+                  width={55}
+                  height={55}
+                  className="rounded-2xl"
+                />{" "}
+                Brilliant Minds Global
               </Link>
             </div>
 
@@ -97,13 +121,13 @@ const Navbar = () => {
             <div className="hidden md:flex items-center space-x-5">
               <Link
                 href="/donate"
-                className="bg-[#344CB7] hover:bg-[#1e2770] active:bg-[#000957] text-white py-2 px-4 rounded-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-sm hover:shadow-md"
+                className="inline-flex items-center justify-center px-6 py-3 border border-blue-600 text-base font-medium rounded-md text-blue-600 gap-2"
               >
                 <VolunteerActivismIcon fontSize="small" />
                 <span>Хандив өгөх</span>
               </Link>
               <div className="h-8 w-px bg-gray-200"></div>
-              <AuthNav />
+              <AuthNav onSetGoalClick={() => setIsGoalModalOpen(true)} />
             </div>
 
             {/* Mobile Menu Button */}
@@ -124,7 +148,6 @@ const Navbar = () => {
       {isMobileMenuOpen && (
         <div className="md:hidden fixed inset-0 bg-white z-50 p-4">
           <div className="flex justify-between items-center mb-10">
-            {/* <span className="text-xl font-bold text-teal-600">Menu</span> */}
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="text-gray-500 hover:text-teal-600"
@@ -138,39 +161,61 @@ const Navbar = () => {
               <div className="flex items-center gap-2 border-b pb-4">
                 <AccountCircleIcon
                   fontSize="large"
-                  className="h-9 w-9  text-teal-600 "
-                />{" "}
-                <p className="text-black"> {userData?.name}</p>
+                  className="h-9 w-9 text-teal-600"
+                />
+
+                <div className="flex flex-col">
+                  <p className="text-black">{userData?.name}</p>
+                  <p className="text-sm text-gray-500">
+                    My goal: ${userData.goal?.toLocaleString() || 0}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsGoalModalOpen(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="ml-auto text-sm text-blue-600 cursor-pointer"
+                >
+                  Set Goal
+                </button>
               </div>
             )}
             <Link
               href="/donate"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="bg-[#344CB7] active:bg-[#000957] text-white w-full text-center py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+              className="inline-flex items-center justify-center px-6 py-3 border border-blue-600 text-base font-medium rounded-md text-blue-600 gap-2"
             >
               <VolunteerActivismIcon fontSize="small" />
               <span>Хандив өгөх</span>
             </Link>
             {userData ? (
               <button
-                className="w-full py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors bg-red-600 hover:bg-red-700 text-white"
+                className="inline-flex items-center justify-center px-6 py-3 border border-red-600 text-base font-medium rounded-md text-red-600 gap-2"
                 onClick={logout}
               >
                 <LogoutIcon fontSize="small" />
-                sign out
+                Sign Out
               </button>
             ) : (
               <Link
                 href="/login"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="w-full py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors bg-teal-600 hover:bg-teal-700 text-white"
+                className="inline-flex items-center justify-center px-6 py-3 border border-blue-600 text-base font-medium rounded-md text-blue-600 gap-2"
               >
-                Login
+                Нэвтрэх
               </Link>
             )}
           </div>
         </div>
       )}
+
+      {/* Goal Modal */}
+      <GoalModal
+        isOpen={isGoalModalOpen}
+        onClose={() => setIsGoalModalOpen(false)}
+        onSave={updateUserGoal}
+      />
     </>
   );
 };

@@ -42,4 +42,9 @@ export const del = async (url, config = {}) => {
   return response.data;
 };
 
+export const patch = async (url, data, config = {}) => {
+  const response = await api.patch(url, data, config);
+  return response.data;
+};
+
 export default api;

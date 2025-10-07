@@ -2,23 +2,9 @@
 import Image from "next/image";
 import { useState } from "react";
 import { Copy } from "lucide-react";
+import Link from "next/link";
 
 export default function Main() {
-  const [copied, setCopied] = useState(false);
-  const iban = "MN29 0005 00 5402101950";
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(iban);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleScrollToBottom = () => {
-    window.scrollTo({
-      top: document.documentElement.scrollHeight,
-      behavior: "smooth",
-    });
-  };
   return (
     <div>
       <div className="max-w-4xl mx-auto rounded-3xl shadow-md p-8 mt-10">
@@ -27,7 +13,7 @@ export default function Main() {
         </h1>
 
         <p className="text-gray-800 leading-relaxed mb-4">
-          Эх ХүүхдийнЭрүүл Мэндийн Үндэсний Төвийн хүүхдийн эрүү, нүүрний мэс
+          Эх Хүүхдийн Эрүүл Мэндийн Үндэсний Төвийн хүүхдийн эрүү, нүүрний мэс
           заслын тасагт нэн шаардлагатай мэс заслын багаж, тоног төхөөрөмжийг
           худалдан авч, хандивлах зорилготой юм. Бидэнд нийт{" "}
           <span className="font-bold">$30,000 (USD), 108,000,000 (MNT)</span>{" "}
@@ -47,12 +33,12 @@ export default function Main() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 mt-6">
-          <button
-            onClick={handleScrollToBottom}
-            className="flex-1 bg-[#344CB7] hover:bg-[#1e2770] active:bg-[#000957] text-white py-3 rounded-2xl font-medium shadow cursor-pointer transition-all duration-300"
+          <Link
+            href="/donate"
+            className="flex-1 text-center bg-[#344CB7] hover:bg-[#1e2770] active:bg-[#000957] text-white py-3 rounded-2xl font-medium shadow cursor-pointer transition-all duration-300"
           >
             Дотоодын шилжүүлэг (MNT)
-          </button>
+          </Link>
           <a
             href="https://donorbox.org/smiles-for-mongolia"
             target="_blank"
@@ -89,9 +75,10 @@ export default function Main() {
           width={800}
           height={600}
           className="object-cover "
+          style={{ height: "auto" }}
         />
       </div>
-      <div className="max-w-4xl mx-auto rounded-3xl shadow-md p-8 mt-10">
+      {/* <div className="max-w-4xl mx-auto rounded-3xl shadow-md p-8 mt-10">
         <h2 className="text-xl font-bold text-gray-900 mb-4">
           Хандив шилжүүлэх дансны мэдээлэл
         </h2>
@@ -123,7 +110,7 @@ export default function Main() {
           <Copy size={18} />
           {copied ? "Санамж хуулсан!" : "IBAN хуулан авах"}
         </button>
-      </div>
+      </div> */}
     </div>
   );
 }

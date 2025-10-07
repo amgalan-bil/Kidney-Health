@@ -2,7 +2,7 @@
 
 import { createContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { get, post } from "../api";
+import { get, post, patch } from "../api";
 import { useRouter } from "next/navigation";
 
 export const AppContent = createContext();
@@ -36,15 +36,33 @@ export const AppContextProvider = (props) => {
   // Fetch user data if logged in
   const getUserData = async () => {
     try {
-      const data = await get("/api/v1/user/data");
+      const data = await get("/api/v1/users/data");
       if (data.success) {
         setUserData(data.userData);
+      } else {
+        toast.error(data.message);
+        console.log(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+      console.log(error);
+    }
+  };
+
+  const updateUserGoal = async (goal) => {
+    try {
+      const data = await patch("/api/v1/users/goal", { goal });
+      if (data.success) {
+        // Update userData with the new goal information
+        setUserData((prevData) => ({ ...prevData, goal: data.user.goal }));
+        toast.success(data.message);
+        await getUserData(); // Refresh user data
       } else {
         toast.error(data.message);
       }
     } catch (error) {
       toast.error(error.message);
-      console.log(error);
+      console.error("Failed to update goal:", error);
     }
   };
 
@@ -75,8 +93,9 @@ export const AppContextProvider = (props) => {
     userData,
     setUserData,
     getUserData,
-    logout, 
-    loading
+    logout,
+    loading,
+    updateUserGoal,
   };
 
   return (

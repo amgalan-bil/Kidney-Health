@@ -28,7 +28,12 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    
+
+    goal: {
+      type: Number,
+      default: 0,
+    },
+
     verifyOtp: {
       type: String,
       default: "",

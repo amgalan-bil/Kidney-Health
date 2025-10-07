@@ -1,10 +1,21 @@
 import userModel from "../models/userModel.js";
+import jwt from "jsonwebtoken";
 
 export const getUserData = async (req, res) => {
-  try {
-    const { userId } = req.body;
+  console.log(req.cookies);
 
-    const user = await userModel.findById(userId);
+  try {
+    const { token } = req.cookies;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authorized, no token" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    const user = await userModel.findById(userId).select("-password");
 
     if (!user) {
       return res.json({ success: false, message: "User not found" });
@@ -12,10 +23,113 @@ export const getUserData = async (req, res) => {
 
     res.json({
       success: true,
-      userData: { userId: userId, name: user.name, role: user.role },
+      userData: { userId: user.id, name: user.name, goal: user.goal },
+    });
+  } catch (error) {
+    console.log(error);
+
+    res
+      .status(401)
+      .json({ success: false, message: "Not authorized, token failed" });
+  }
+};
+
+export const updateUserGoal = async (req, res) => {
+  try {
+    // Authenticate the user from the token in cookies
+    const { token } = req.cookies;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authorized, no token" });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    // Get and validate the goal from the request body
+    const { goal } = req.body;
+    if (goal === undefined || typeof goal !== "number" || goal < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "A valid, non-negative goal is required.",
+      });
+    }
+
+    // Find the user and update their goal
+    const updatedUser = await userModel
+      .findByIdAndUpdate(userId, { goal }, { new: true })
+      .select("-password");
+
+    if (!updatedUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    res.json({
+      success: true,
+      message: "Goal updated successfully.",
+      user: updatedUser,
+    });
+  } catch (error) {
+    if (
+      error.name === "JsonWebTokenError" ||
+      error.name === "TokenExpiredError"
+    ) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authorized, token failed" });
+    }
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getUserById = async (req, res) => {
+  try {
+    const user = await userModel
+      .findById(req.params.id)
+      .select(
+        "-password -__v -resetOtp -resetOtpExpireAt -verifyOtp -verifyOtpExpireAt"
+      );
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    res.json({ success: true, user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const users = await userModel
+      .find()
+      .select(
+        "-password -__v -resetOtp -resetOtpExpireAt -verifyOtp -verifyOtpExpireAt"
+      )
+      .skip(skip)
+      .limit(limit);
+
+    const totalUsers = await userModel.countDocuments();
+
+    res.json({
+      success: true,
+      users,
+      pagination: {
+        totalUsers,
+        totalPages: Math.ceil(totalUsers / limit),
+        currentPage: page,
+      },
     });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
 };
-
