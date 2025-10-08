@@ -4,7 +4,7 @@ import axios from "axios";
 
 // --- QPay Configuration ---
 // IMPORTANT: Store these in environment variables (.env file) for security
-const QPAY_API_URL = "https://api.qpay.mn/v2"; // Use sandbox URL for testing
+const QPAY_API_URL = "https://merchant.qpay.mn/v2"; // Use sandbox URL for testing
 const QPAY_USERNAME = process.env.QPAY_USERNAME;
 const QPAY_PASSWORD = process.env.QPAY_PASSWORD;
 const INVOICE_CODE = process.env.QPAY_INVOICE_CODE;
@@ -18,6 +18,8 @@ const getQpayToken = async () => {
         password: QPAY_PASSWORD,
       },
     });
+    console.log("response", response.data);
+    
     return response.data.access_token;
   } catch (error) {
     console.error(
@@ -46,6 +48,7 @@ export const createQpayInvoice = async (req, res) => {
       message,
       status: "pending",
     });
+
     await newDonation.save();
 
     const token = await getQpayToken();
@@ -54,7 +57,7 @@ export const createQpayInvoice = async (req, res) => {
       invoice_code: INVOICE_CODE,
       sender_invoice_no: newDonation._id.toString(),
       invoice_receiver_code: newDonation.userId.toString(), // Can be any identifier
-      invoice_description: `Donation for user ${userId}`,
+      invoice_description: `Donation for increasing user ${userId}'s goal`,
       amount: newDonation.amount,
       callback_url: `https://smile-for-mongolia.onrender.com/api/v1/donation/qpay?donationId=${newDonation._id.toString()}`,
     };
