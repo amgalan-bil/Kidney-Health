@@ -31,6 +31,8 @@ const donationSchema = new mongoose.Schema(
     // QPay's internal transaction ID, received after payment check
     paymentId: {
       type: String,
+      unique: true,
+      sparse: true, // This is the fix. It allows multiple documents to have a null value.
     },
   },
   {
