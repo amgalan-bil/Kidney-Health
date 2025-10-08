@@ -1,4 +1,5 @@
 import userModel from "../models/userModel.js";
+import Donation from "../models/donationModel.js";
 import jwt from "jsonwebtoken";
 
 export const getUserData = async (req, res) => {
@@ -21,9 +22,33 @@ export const getUserData = async (req, res) => {
       return res.json({ success: false, message: "User not found" });
     }
 
+    // Calculate the total amount raised from successful donations
+    const donationAggregation = await Donation.aggregate([
+      {
+        $match: {
+          userId: user._id,
+          status: "PAID", // Assuming 'PAID' is the status for successful donations
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalRaised: { $sum: "$amount" },
+        },
+      },
+    ]);
+
+    const raisedAmount =
+      donationAggregation.length > 0 ? donationAggregation[0].totalRaised : 0;
+
     res.json({
       success: true,
-      userData: { userId: user.id, name: user.name, goal: user.goal },
+      userData: {
+        userId: user.id,
+        name: user.name,
+        goal: user.goal,
+        raisedAmount: raisedAmount,
+      },
     });
   } catch (error) {
     console.log(error);

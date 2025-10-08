@@ -87,6 +87,59 @@ export const createQpayInvoice = async (req, res) => {
   }
 };
 
+export const handleQpayWebhook = async (req, res) => {
+  // QPay sends payment data in the request body for callbacks
+  const { object_id, payment_status } = req.body;
+
+  console.log("QPay Webhook Received:", req.body);
+
+  // The object_id from the webhook corresponds to your sender_invoice_no (donation._id)
+  const donationId = object_id;
+
+  if (!donationId) {
+    console.error("Webhook received without an object_id.");
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing donation ID." });
+  }
+
+  if (payment_status === "PAID") {
+    try {
+      const donation = await donationModel.findById(donationId);
+
+      if (donation && donation.status !== "paid") {
+        donation.status = "paid";
+        // You can store more details from the webhook body if needed
+        // donation.paymentId = req.body.payment_id;
+        await donation.save();
+
+        console.log(`Donation ${donationId} successfully marked as PAID.`);
+
+        // Optionally, increment a user's total raised amount here
+        await userModel.findByIdAndUpdate(donation.userId, {
+          $inc: { totalDonatedAmount: donation.amount },
+        });
+      } else if (donation && donation.status === "paid") {
+        console.log(`Donation ${donationId} was already marked as PAID.`);
+      } else if (!donation) {
+        console.error(`Webhook for non-existent donation ID: ${donationId}`);
+      }
+    } catch (error) {
+      console.error(
+        `Error processing webhook for donation ${donationId}:`,
+        error
+      );
+      // Return a 500 error, QPay might try to send the webhook again
+      return res
+        .status(500)
+        .json({ success: false, message: "Server error processing webhook." });
+    }
+  }
+
+  // IMPORTANT: Always send a 200 OK response to acknowledge receipt of the webhook
+  res.status(200).json({ success: true, message: "Webhook acknowledged." });
+};
+
 // --- New Controller to manually check payment status ---
 export const checkQpayPayment = async (req, res) => {
   const { invoiceId } = req.params;
