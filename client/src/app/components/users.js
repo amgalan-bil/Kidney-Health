@@ -26,7 +26,7 @@ const Users = () => {
     <div className="bg-gray-50 text-gray-800 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-center">
-          Хамгийн их хандив цуглуулсан
+          Хамгийн их хандив өгсөн хүмүүс
         </h1>
         <Link
           href="/fundraisers"

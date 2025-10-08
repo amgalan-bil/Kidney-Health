@@ -134,7 +134,7 @@ export const getAllUsers = async (req, res) => {
       .select(
         "-password -__v -resetOtp -resetOtpExpireAt -verifyOtp -verifyOtpExpireAt"
       )
-      .sort({ name: 1 })
+      .sort({ totalDonatedAmount: -1 })
       .skip(skip)
       .limit(limit);
 
