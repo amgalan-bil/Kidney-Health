@@ -19,7 +19,7 @@ const getQpayToken = async () => {
       },
     });
     console.log("response", response.data);
-    
+
     return response.data.access_token;
   } catch (error) {
     console.error(
@@ -52,6 +52,8 @@ export const createQpayInvoice = async (req, res) => {
     await newDonation.save();
 
     const token = await getQpayToken();
+
+    console.log("qpaytoken", token);
 
     const invoicePayload = {
       invoice_code: INVOICE_CODE,
