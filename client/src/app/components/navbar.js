@@ -54,7 +54,11 @@ const AuthNav = ({ onSetGoalClick }) => {
                 {userData?.name}
               </p>
               <p className="text-sm text-gray-500">
-                Миний зорилго: {userData.goal?.toLocaleString() || 0}₮
+                Миний зорилго: {userData?.goal?.toLocaleString() || 0}₮
+              </p>
+              <p className="text-sm text-teal-500">
+                Миний хандивласан:{" "}
+                {userData?.raisedAmount?.toLocaleString() || 0}₮
               </p>
             </div>
             <button
@@ -167,7 +171,11 @@ const Navbar = () => {
                 <div className="flex flex-col">
                   <p className="text-black">{userData?.name}</p>
                   <p className="text-sm text-gray-500">
-                    Миний зорилго: {userData.goal?.toLocaleString() || 0}₮
+                    Миний зорилго: {userData?.goal?.toLocaleString() || 0}₮
+                  </p>
+                  <p className="text-sm text-teal-500">
+                    Миний хандивласан:{" "}
+                    {userData?.raisedAmount?.toLocaleString() || 0}₮
                   </p>
                 </div>
                 <button

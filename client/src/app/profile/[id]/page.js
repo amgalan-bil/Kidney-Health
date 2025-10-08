@@ -3,7 +3,6 @@ import React, { useContext, useEffect, useState, useCallback } from "react";
 import { get, post } from "../../api";
 import { useParams } from "next/navigation";
 import { AppContent } from "@/app/context/AppContext";
-
 // MUI Components
 import {
   Container,
@@ -23,8 +22,6 @@ import {
   Link as MuiLink,
   Avatar,
 } from "@mui/material";
-import { ArrowBack } from "@mui/icons-material";
-
 const UserProfile = () => {
   const params = useParams();
   const { id } = params;
@@ -192,7 +189,7 @@ const UserProfile = () => {
           >
             <Typography variant="h3">{user.name.charAt(0)}</Typography>
           </Avatar>
-          <Typography variant="h4" component="h1" fontWeight="bold">
+          <Typography className="text-center" variant="h4" component="h1" fontWeight="bold">
             {user.name}
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -250,8 +247,8 @@ const UserProfile = () => {
               onSubmit={handleDonate}
               sx={{ pt: 1 }}
             >
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Grid item xs={12} sm={6}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     label="Таны нэр"
                     value={name}
