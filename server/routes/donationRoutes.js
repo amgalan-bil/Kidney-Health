@@ -1,9 +1,8 @@
 import express from "express";
-import userAuth from "../middleware/userAuth.js";
-import { getUserData } from "../controllers/userController.js";
+import { qpayPaid } from "../controllers/donationController.js";
 
 const donationRouter = express.Router();
 
-donationRouter.get("/data", userAuth, getUserData);
+donationRouter.get("/qpay", qpayPaid);
 
 export default donationRouter;
