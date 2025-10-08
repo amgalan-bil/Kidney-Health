@@ -108,17 +108,28 @@ export const getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
     const skip = (page - 1) * limit;
 
+    const query = search
+      ? {
+          $or: [
+            { name: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
+
     const users = await userModel
-      .find()
+      .find(query)
       .select(
         "-password -__v -resetOtp -resetOtpExpireAt -verifyOtp -verifyOtpExpireAt"
       )
+      .sort({ name: 1 })
       .skip(skip)
       .limit(limit);
 
-    const totalUsers = await userModel.countDocuments();
+    const totalUsers = await userModel.countDocuments(query);
 
     res.json({
       success: true,

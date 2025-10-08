@@ -108,12 +108,15 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    res.clearCookie("token", {
+    // The options here MUST match the options used when setting the cookie in login.
+    const cookieOptions = {
       httpOnly: true,
-      secure: true,
-      Site: "none",
+      secure: process.env.NODE_ENV === "production", // Only send over HTTPS in production
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Adjust for cross-site requests in prod
       path: "/",
-    });
+    };
+
+    res.clearCookie("token", cookieOptions);
     return res.json({ success: true, message: "Logged out" });
   } catch (error) {
     return res.json({ success: false, message: error.message });
@@ -203,10 +206,10 @@ export const isAuthenticated = async (req, res) => {
 export const sendResetOtp = async (req, res) => {
   const { email } = req.body;
   console.log("email", email);
-  
+
   if (!email) {
     console.log("no email");
-    
+
     return res.json({ success: false, message: "Email is required" });
   }
   try {
@@ -223,8 +226,6 @@ export const sendResetOtp = async (req, res) => {
 
     // Respond to the client immediately
     res.json({ success: true, message: "OTP sent to your mail" });
-
-    
 
     const mailOptions = {
       from: process.env.SENDER_EMAIL,
