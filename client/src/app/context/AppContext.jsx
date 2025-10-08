@@ -37,8 +37,13 @@ export const AppContextProvider = (props) => {
   const getUserData = async () => {
     try {
       const data = await get("/api/v1/users/data");
+      console.log(data);
+      
       if (data.success) {
         setUserData(data.userData);
+        console.log(data);
+        
+
       } else {
         toast.error(data.message);
         console.log(data.message);
@@ -55,6 +60,7 @@ export const AppContextProvider = (props) => {
       if (data.success) {
         // Update userData with the new goal information
         setUserData((prevData) => ({ ...prevData, goal: data.user.goal }));
+
         toast.success(data.message);
         await getUserData(); // Refresh user data
       } else {

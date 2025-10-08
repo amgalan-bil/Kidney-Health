@@ -54,7 +54,7 @@ const AuthNav = ({ onSetGoalClick }) => {
                 {userData?.name}
               </p>
               <p className="text-sm text-gray-500">
-                My goal: ${userData.goal?.toLocaleString() || 0}
+                Миний зорилго: {userData.goal?.toLocaleString() || 0}₮
               </p>
             </div>
             <button
@@ -65,14 +65,14 @@ const AuthNav = ({ onSetGoalClick }) => {
               className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
             >
               <EditIcon fontSize="small" />
-              <span>Set Goal</span>
+              <span>Зорилго тавих</span>
             </button>
             <button
               onClick={logout}
               className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
             >
               <LogoutIcon fontSize="small" />
-              <span>Sign Out</span>
+              <span>Гарах</span>
             </button>
           </div>
         )}
@@ -167,7 +167,7 @@ const Navbar = () => {
                 <div className="flex flex-col">
                   <p className="text-black">{userData?.name}</p>
                   <p className="text-sm text-gray-500">
-                    My goal: ${userData.goal?.toLocaleString() || 0}
+                    Миний зорилго: {userData.goal?.toLocaleString() || 0}₮
                   </p>
                 </div>
                 <button
@@ -177,7 +177,7 @@ const Navbar = () => {
                   }}
                   className="ml-auto text-sm text-blue-600 cursor-pointer"
                 >
-                  Set Goal
+                  Зорилго тавих
                 </button>
               </div>
             )}
@@ -195,7 +195,7 @@ const Navbar = () => {
                 onClick={logout}
               >
                 <LogoutIcon fontSize="small" />
-                Sign Out
+                Гарах
               </button>
             ) : (
               <Link

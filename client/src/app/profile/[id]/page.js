@@ -1,150 +1,369 @@
 "use client";
-import React, { useContext, useEffect, useState } from "react";
-import { get } from "../../api";
+import React, { useContext, useEffect, useState, useCallback } from "react";
+import { get, post } from "../../api";
 import { useParams } from "next/navigation";
 import { AppContent } from "@/app/context/AppContext";
 
+// MUI Components
+import {
+  Container,
+  Box,
+  Typography,
+  CircularProgress,
+  Alert,
+  Paper,
+  LinearProgress,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Grid,
+  Link as MuiLink,
+  Avatar,
+} from "@mui/material";
+import { ArrowBack } from "@mui/icons-material";
+
 const UserProfile = () => {
   const params = useParams();
-
   const { id } = params;
+  const { userData: loggedInUserData, getUserData } = useContext(AppContent);
+
+  // Profile user state
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { userData } = useContext(AppContent); // Access the app context
 
+  // Donation Dialog State
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [name, setName] = useState("");
+  const [message, setMessage] = useState("");
+  const [donationLoading, setDonationLoading] = useState(false);
+  const [donationError, setDonationError] = useState(null);
+  const [qpayData, setQpayData] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [isChecking, setIsChecking] = useState(false);
+
+  const fetchUser = useCallback(async () => {
+    if (!id) return;
+    try {
+      setLoading(true);
+      const data = await get(`/api/v1/users/${id}`);
+      if (data && data.success) {
+        setUser(data.user);
+      } else {
+        setError(data.message || "Хэрэглэгчийн мэдээлэл татахад алдаа гарлаа.");
+      }
+    } catch (err) {
+      setError(err.message || "Алдаа гарлаа.");
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    if (id) {
-      const fetchUser = async () => {
-        try {
-          setLoading(true);
-          const data = await get(`/api/v1/users/${id}`);
-          if (data && data.success) {
-            setUser(data.user);
-          } else {
-            setError(data.message || "Failed to fetch user data.");
-          }
-        } catch (err) {
-          setError(err.message || "An error occurred.");
-        } finally {
-          setLoading(false);
+    fetchUser();
+  }, [fetchUser]);
+
+  const handleCheckPaymentDialog = useCallback(async () => {
+    if (!qpayData?.invoice_id || isChecking) return;
+    setIsChecking(true);
+    try {
+      const data = await post(
+        `/api/v1/donation/check-payment/${qpayData.invoice_id}`
+      );
+      if (data.success) {
+        setPaymentStatus(data);
+        if (data.status === "PAID") {
+          await fetchUser(); // Re-fetch user to show updated amount
+          await getUserData(); // Re-fetch logged-in user data to update raised amount if it's their own profile
         }
-      };
-      fetchUser();
+      }
+    } catch (err) {
+      // Don't show an error for polling, only for manual checks if desired
+    } finally {
+      setIsChecking(false);
     }
-  }, [id, userData]);
+  }, [qpayData, isChecking, fetchUser, getUserData]);
+
+  useEffect(() => {
+    if (qpayData && paymentStatus?.status !== "PAID") {
+      const intervalId = setInterval(() => {
+        handleCheckPaymentDialog();
+      }, 3000); // Check every 3 seconds
+
+      return () => clearInterval(intervalId);
+    }
+  }, [qpayData, paymentStatus, handleCheckPaymentDialog]);
+
+  const handleOpenDialog = () => {
+    setName(loggedInUserData?.name || "");
+    setOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpen(false);
+    setQpayData(null);
+    setDonationError(null);
+    setAmount("");
+    setMessage("");
+    setName("");
+    setPaymentStatus(null);
+  };
+
+  const handleDonate = async (e) => {
+    e.preventDefault();
+    setDonationLoading(true);
+    setDonationError(null);
+    setQpayData(null);
+
+    try {
+      const data = await post("/api/v1/donation/create-invoice", {
+        amount: parseInt(amount, 10),
+        userId: user._id,
+        name: name || "Anonymous",
+        message,
+      });
+
+      if (data && data.success) {
+        setQpayData(data.qpayData);
+      } else {
+        setDonationError(
+          data.message || "QPay нэхэмжлэх үүсгэхэд алдаа гарлаа."
+        );
+      }
+    } catch (err) {
+      setDonationError(err.message || "Гэнэтийн алдаа гарлаа.");
+    } finally {
+      setDonationLoading(false);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p className="text-lg">Loading profile...</p>
-      </div>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "80vh",
+        }}
+      >
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p className="text-lg text-red-500">Error: {error}</p>
-      </div>
+      <Container maxWidth="sm" sx={{ mt: 8 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
     );
   }
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p className="text-lg">User not found.</p>
-      </div>
+      <Container maxWidth="sm" sx={{ mt: 8 }}>
+        <Alert severity="warning">Хэрэглэгч олдсонгүй.</Alert>
+      </Container>
     );
   }
 
   const progress =
     user.goal > 0
-      ? Math.min((user.totalDonatedAmount / user.goal) * 100, 100)
+      ? Math.min((user?.totalDonatedAmount / user?.goal) * 100, 100)
       : 0;
 
   return (
-    <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="flex flex-col items-center text-center">
-            <svg
-              className="h-24 w-24 text-gray-300 mb-4"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 4 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Avatar
+            sx={{ width: 96, height: 96, mb: 2, bgcolor: "primary.main" }}
+          >
+            <Typography variant="h3">{user.name.charAt(0)}</Typography>
+          </Avatar>
+          <Typography variant="h4" component="h1" fontWeight="bold">
+            {user.name}
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            {user.email}
+          </Typography>
+        </Box>
+
+        <Box sx={{ mt: 4 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+              mb: 1,
+            }}
+          >
+            <Typography
+              variant="h4"
+              component="p"
+              fontWeight="bold"
+              color="success.main"
             >
-              <path
-                fillRule="evenodd"
-                d="M18.685 19.097A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.065 7.097A9.716 9.716 0 0012 21.75a9.716 9.716 0 006.685-2.653zm-12.54-1.285A7.486 7.486 0 0112 15a7.486 7.486 0 015.855 2.812A8.224 8.224 0 0112 20.25a8.224 8.224 0 01-5.855-2.438zM15.75 9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <h1 className="text-4xl font-bold text-gray-800">{user.name}</h1>
-            <p className="text-lg text-gray-600 mt-2">{user.email}</p>
-          </div>
+              {(user.totalDonatedAmount || 0).toLocaleString()}₮
+              <Typography component="span" color="text.secondary">
+                {" "}
+                цугласан
+              </Typography>
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Зорилго: {(user.goal || 0).toLocaleString()}₮
+            </Typography>
+          </Box>
+          <LinearProgress
+            variant="determinate"
+            value={progress}
+            sx={{ height: 10, borderRadius: 5 }}
+          />
+        </Box>
 
-          <div className="mt-8">
-            <div className="flex justify-between items-end mb-2">
-              <div>
-                <span className="text-3xl font-bold text-green-600">
-                  ${user.totalDonatedAmount.toLocaleString()}
-                </span>
-                <span className="text-gray-500"> raised</span>
-              </div>
-              <div className="text-right">
-                <span className="text-lg font-medium text-gray-500">
-                  Goal: ${user.goal.toLocaleString()}
-                </span>
-              </div>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
-              <div
-                className="bg-indigo-600 h-4 rounded-full"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-          </div>
+        <Box sx={{ mt: 4, textAlign: "center" }}>
+          <Button variant="contained" size="large" onClick={handleOpenDialog}>
+            {user.name}-н зорилгыг дэмжих
+          </Button>
+        </Box>
+      </Paper>
 
-          <div className="mt-8 text-center">
-            <button className="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors text-lg cursor-pointer">
-              Support {user.name}'s donation goal
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-10">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            Recent Donations
-          </h2>
-          {user.donations && user.donations.length > 0 ? (
-            <ul className="space-y-4">
-              {user.donations.map((donation) => (
-                <li
-                  key={donation._id}
-                  className="p-4 bg-white rounded-lg shadow flex justify-between items-center"
-                >
-                  <div>
-                    <p className="font-semibold">
-                      {donation.name || "Anonymous"}
-                    </p>
-                    <p className="text-sm text-gray-600">{donation.message}</p>
-                  </div>
-                  <span className="font-bold text-lg text-green-600">
-                    ${donation.amount.toLocaleString()}
-                  </span>
-                </li>
-              ))}
-            </ul>
+      {/* Donation Dialog */}
+      <Dialog open={open} onClose={handleCloseDialog} fullWidth maxWidth="sm">
+        <DialogTitle fontWeight="bold">{user.name}-д хандивлах</DialogTitle>
+        <DialogContent>
+          {!qpayData ? (
+            <Box
+              component="form"
+              id="donation-form"
+              onSubmit={handleDonate}
+              sx={{ pt: 1 }}
+            >
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Таны нэр"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    fullWidth
+                    required
+                    InputProps={{ readOnly: !!loggedInUserData }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Хандивын дүн (MNT)"
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    fullWidth
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Зурвас (заавал биш)"
+                    multiline
+                    rows={3}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    fullWidth
+                  />
+                </Grid>
+              </Box>
+              {donationError && (
+                <Alert severity="error" sx={{ mt: 2 }}>
+                  {donationError}
+                </Alert>
+              )}
+            </Box>
           ) : (
-            <div className="text-center py-8 px-4 bg-white rounded-lg shadow">
-              <p className="text-gray-500">No donations yet.</p>
-            </div>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h6" gutterBottom>
+                {paymentStatus?.status === "PAID"
+                  ? "Хандив амжилттай!"
+                  : "Төлбөрөө гүйцэтгэнэ үү"}
+              </Typography>
+              {paymentStatus?.status === "PAID" ? (
+                <Alert severity="success" sx={{ my: 2 }}>
+                  {paymentStatus.message}
+                </Alert>
+              ) : (
+                <>
+                  <Typography color="text.secondary" sx={{ mb: 2 }}>
+                    Доорх QR кодыг уншуулна уу.
+                  </Typography>
+                  <Box
+                    component="img"
+                    src={`data:image/jpeg;base64,${qpayData.qr_image}`}
+                    alt="QPay QR Code"
+                    sx={{
+                      width: 250,
+                      height: 250,
+                      my: 2,
+                      border: "1px solid #ddd",
+                      borderRadius: 2,
+                    }}
+                  />
+                  <Grid container spacing={1} justifyContent="center">
+                    {qpayData.urls.map((link) => (
+                      <Grid item key={link.name}>
+                        <MuiLink
+                          href={link.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          underline="none"
+                        >
+                          <img
+                            src={link.logo}
+                            alt={link.description}
+                            style={{ height: 40, width: "auto" }}
+                          />
+                        </MuiLink>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </>
+              )}
+            </Box>
           )}
-        </div>
-      </div>
-    </div>
+        </DialogContent>
+        <DialogActions sx={{ p: "16px 24px" }}>
+          <Button onClick={handleCloseDialog}>
+            {paymentStatus?.status === "PAID" ? "Хаах" : "Цуцлах"}
+          </Button>
+          {!qpayData ? (
+            <Button
+              type="submit"
+              form="donation-form"
+              variant="contained"
+              disabled={donationLoading}
+            >
+              {donationLoading ? <CircularProgress size={24} /> : "QR код авах"}
+            </Button>
+          ) : paymentStatus?.status !== "PAID" ? (
+            <Button
+              variant="contained"
+              onClick={handleCheckPaymentDialog}
+              disabled={isChecking}
+            >
+              {isChecking ? <CircularProgress size={24} /> : "Төлбөр шалгах"}
+            </Button>
+          ) : null}
+        </DialogActions>
+      </Dialog>
+    </Container>
   );
 };
 
