@@ -49,17 +49,16 @@ export const createQpayInvoice = async (req, res) => {
       status: "pending",
     });
 
+    // We save first to get an _id for the callback_url
     await newDonation.save();
 
     const token = await getQpayToken();
 
-    console.log("qpaytoken", token);
-
     const invoicePayload = {
       invoice_code: INVOICE_CODE,
       sender_invoice_no: newDonation._id.toString(),
-      invoice_receiver_code: newDonation.userId.toString(), // Can be any identifier
-      invoice_description: `Donation for increasing user ${userId}'s goal`,
+      invoice_receiver_code: newDonation.userId.toString(),
+      invoice_description: `Donation from ${name}`,
       amount: newDonation.amount,
       callback_url: `https://smile-for-mongolia.onrender.com/api/v1/donation/qpay?donationId=${newDonation._id.toString()}`,
     };
@@ -72,6 +71,10 @@ export const createQpayInvoice = async (req, res) => {
       }
     );
 
+    // Save the QPay invoice_id to our donation document
+    newDonation.qpayInvoiceId = data.invoice_id;
+    await newDonation.save();
+
     res.status(200).json({ success: true, qpayData: data });
   } catch (error) {
     console.error(
@@ -81,6 +84,67 @@ export const createQpayInvoice = async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Failed to create QPay invoice." });
+  }
+};
+
+// --- New Controller to manually check payment status ---
+export const checkQpayPayment = async (req, res) => {
+  const { invoiceId } = req.params;
+
+  try {
+    const token = await getQpayToken();
+    const { data } = await axios.post(
+      `${QPAY_API_URL}/payment/check`,
+      {
+        object_type: "INVOICE",
+        object_id: invoiceId,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (data.count > 0 && data.rows[0].payment_status === "PAID") {
+      const donation = await donationModel.findOne({
+        qpayInvoiceId: invoiceId,
+      });
+
+      if (donation && donation.status === "pending") {
+        donation.status = "paid";
+        donation.paymentId = data.rows[0].payment_id;
+        await donation.save();
+
+        await userModel.findByIdAndUpdate(donation.userId, {
+          $inc: { totalDonatedAmount: donation.amount },
+        });
+
+        return res.json({
+          success: true,
+          status: "PAID",
+          message: "Payment confirmed and updated.",
+        });
+      } else if (donation && donation.status === "paid") {
+        return res.json({
+          success: true,
+          status: "PAID",
+          message: "Payment was already confirmed.",
+        });
+      }
+    }
+
+    return res.json({
+      success: true,
+      status: "PENDING",
+      message: "Payment not confirmed yet.",
+    });
+  } catch (error) {
+    console.error(
+      "Error checking QPay payment:",
+      error.response ? error.response.data : error.message
+    );
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to check payment status." });
   }
 };
 
