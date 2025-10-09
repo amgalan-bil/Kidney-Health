@@ -153,6 +153,16 @@ const Donate = () => {
     }
   };
 
+  useEffect(() => {
+    if (paymentStatus?.status === "PAID") {
+      const timer = setTimeout(() => {
+        router.push("/thank-you");
+      }, 3000); // Redirect after 3 seconds
+      return () => clearTimeout(timer);
+    }
+
+  },[paymentStatus])
+
   const handleCheckPayment = async () => {
     if (!qpayData?.invoice_id) return;
     setIsChecking(true);
@@ -164,7 +174,7 @@ const Donate = () => {
       );
       if (data.success) {
         setPaymentStatus(data);
-        router.push("/");
+
       } else {
         setError("Could not check payment status.");
       }
@@ -174,6 +184,8 @@ const Donate = () => {
       setIsChecking(false);
     }
   };
+
+  
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
