@@ -74,12 +74,12 @@ export default function Main() {
             Дотоодын шилжүүлэг (MNT)
           </Link>
           <a
-            href="https://donorbox.org/smiles-for-mongolia"
+            href="https://donorbox.org/little-faces-big-smile"
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-center py-3 rounded-2xl font-medium shadow-md cursor-pointer transition-all duration-300 text-lg"
           >
-            Олон улсын / Donorbox
+            International / Donorbox
           </a>
         </div>
       </div>

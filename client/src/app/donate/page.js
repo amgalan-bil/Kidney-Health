@@ -389,10 +389,10 @@ const Donate = () => {
               variant="contained"
               color="success"
               fullWidth
-              href="https://donorbox.org/smiles-for-mongolia"
+              href="https://donorbox.org/little-faces-big-smile"
               target="_blank"
             >
-              Олон улсын / Donorbox
+              International / Donorbox
             </Button>
           </Grid>
         </Grid>
