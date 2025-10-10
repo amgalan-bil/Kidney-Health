@@ -217,6 +217,10 @@ export const qpayPaid = async (req, res) => {
       {
         object_type: "INVOICE",
         object_id: donationId,
+        offset: {
+          page_number: 1,
+          page_limit: 100,
+        },
       },
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -258,5 +262,56 @@ export const qpayPaid = async (req, res) => {
       error.response ? error.response.data : error.message
     );
     res.redirect("/payment/failed?reason=server_error");
+  }
+};
+
+export const checkAllQpayPayments = async (req, res) => {
+  try {
+    const donations = await donationModel.find({ status: "pending" });
+
+    const token = await getQpayToken();
+    const paymentStatusUpdates = [];
+
+    for (const donation of donations) {
+      const { data } = await axios.post(
+        `${QPAY_API_URL}/payment/check`,
+        {
+          object_type: "INVOICE",
+          object_id: donation.qpayInvoiceId,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (data.count > 0 && data.rows[0].payment_status === "PAID") {
+        donation.status = "paid";
+        donation.paymentId = data.rows[0].payment_id;
+        await donation.save();
+
+        await userModel.findByIdAndUpdate(donation.userId, {
+          $inc: { totalDonatedAmount: donation.amount },
+        });
+
+        paymentStatusUpdates.push({
+          donationId: donation._id,
+          status: "PAID",
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: "Payment status checked for all donations.",
+      updates: paymentStatusUpdates,
+    });
+  } catch (error) {
+    console.error(
+      "Error checking all QPay payments:",
+      error.response ? error.response.data : error.message
+    );
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to check payment statuses." });
   }
 };
