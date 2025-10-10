@@ -37,16 +37,12 @@ export const AppContextProvider = (props) => {
   const getUserData = async () => {
     try {
       const data = await get("/api/v1/users/data");
-      console.log(data);
-      
-      if (data.success) {
-        setUserData(data.userData);
-        console.log(data);
-        
 
+      if (data.success) {
+        setUserData(data?.userData);
       } else {
-        toast.error(data.message);
-        console.log(data.message);
+        toast.error(data?.message);
+        console.log(data?.message);
       }
     } catch (error) {
       toast.error(error.message);

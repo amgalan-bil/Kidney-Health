@@ -142,7 +142,7 @@ const Donate = () => {
       });
 
       if (data && data.success) {
-        setQpayData(data.qpayData);
+        setQpayData(data?.qpayData);
       } else {
         setError(data.message || "Failed to create QPay invoice.");
       }

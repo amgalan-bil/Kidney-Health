@@ -30,7 +30,7 @@ const Header = () => {
 
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-full">
         <div className="text-white text-5xl md:text-7xl font-bold text-center p-4 [text-shadow:_2px_2px_4px_rgb(0_0_0_/_40%)]">
-          Smiles For Mongolia
+          Little Faces Big Smiles
           <br />
           <p className="text-2xl md:text-4xl mt-2">
             Монголын хүүхдүүдэд инээмсэглэл

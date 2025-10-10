@@ -25,7 +25,7 @@ import {
 const UserProfile = () => {
   const params = useParams();
   const { id } = params;
-  const { userData: loggedInUserData, getUserData } = useContext(AppContent);
+  const { userData: loggedInUserData } = useContext(AppContent);
 
   // Profile user state
   const [user, setUser] = useState(null);
@@ -75,7 +75,6 @@ const UserProfile = () => {
         setPaymentStatus(data);
         if (data.status === "PAID") {
           await fetchUser(); // Re-fetch user to show updated amount
-          await getUserData(); // Re-fetch logged-in user data to update raised amount if it's their own profile
         }
       }
     } catch (err) {
@@ -83,7 +82,7 @@ const UserProfile = () => {
     } finally {
       setIsChecking(false);
     }
-  }, [qpayData, isChecking, fetchUser, getUserData]);
+  }, [qpayData, isChecking, fetchUser]);
 
   useEffect(() => {
     if (qpayData && paymentStatus?.status !== "PAID") {
