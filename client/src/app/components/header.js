@@ -29,10 +29,10 @@ const Header = () => {
       <div className="absolute inset-0 bg-black opacity-40 z-10 pointer-events-none" />
 
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-full">
-        <div className="text-white text-5xl md:text-7xl font-bold text-center p-4 [text-shadow:_2px_2px_4px_rgb(0_0_0_/_40%)]">
+        <div className="text-white text-xl md:text-7xl font-bold text-center p-4 [text-shadow:_2px_2px_4px_rgb(0_0_0_/_40%)]">
           Little Faces Big Smiles
           <br />
-          <p className="text-2xl md:text-4xl mt-2">
+          <p className="text-lg md:text-3xl">
             Монголын хүүхдүүдэд инээмсэглэл
           </p>
         </div>
