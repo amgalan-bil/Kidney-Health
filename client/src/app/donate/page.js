@@ -18,6 +18,7 @@ import {
   Link as MuiLink,
   Collapse,
   Autocomplete,
+  InputAdornment,
 } from "@mui/material";
 
 // MUI Icons
@@ -28,6 +29,8 @@ import {
   Check,
   ArrowBack,
 } from "@mui/icons-material";
+
+import SearchIcon from "@mui/icons-material/Search";
 
 const Donate = () => {
   const { userData } = useContext(AppContent);
@@ -160,8 +163,7 @@ const Donate = () => {
       }, 3000); // Redirect after 3 seconds
       return () => clearTimeout(timer);
     }
-
-  },[paymentStatus])
+  }, [paymentStatus]);
 
   const handleCheckPayment = async () => {
     if (!qpayData?.invoice_id) return;
@@ -174,7 +176,6 @@ const Donate = () => {
       );
       if (data.success) {
         setPaymentStatus(data);
-
       } else {
         setError("Could not check payment status.");
       }
@@ -184,8 +185,6 @@ const Donate = () => {
       setIsChecking(false);
     }
   };
-
-  
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -213,7 +212,9 @@ const Donate = () => {
               ) : (
                 <Autocomplete
                   options={userOptions}
-                  getOptionLabel={(option) => option.name || ""}
+                  getOptionLabel={(option) =>
+                    option.name ? `${option.name} (${option.email})` : ""
+                  }
                   isOptionEqualToValue={(option, value) =>
                     option._id === value._id
                   }
@@ -246,6 +247,11 @@ const Donate = () => {
                       required
                       InputProps={{
                         ...params.InputProps,
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon />  хайх
+                          </InputAdornment>
+                        ),
                         endAdornment: (
                           <>
                             {loadingUsers ? (
