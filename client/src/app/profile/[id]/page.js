@@ -43,6 +43,16 @@ const UserProfile = () => {
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [isChecking, setIsChecking] = useState(false);
 
+  const handleAmountChange = (e) => {
+    const value = e.target.value.replace(/[^0-9]/g, "");
+    setAmount(value);
+  };
+
+  const formatNumber = (numStr) => {
+    if (!numStr) return "";
+    return new Intl.NumberFormat("en-US").format(parseInt(numStr, 10));
+  };
+
   const fetchUser = useCallback(async () => {
     if (!id) return;
     try {
@@ -188,7 +198,12 @@ const UserProfile = () => {
           >
             <Typography variant="h3">{user.name.charAt(0)}</Typography>
           </Avatar>
-          <Typography className="text-center" variant="h4" component="h1" fontWeight="bold">
+          <Typography
+            className="text-center"
+            variant="h4"
+            component="h1"
+            fontWeight="bold"
+          >
             {user.name}
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -260,11 +275,12 @@ const UserProfile = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     label="Хандивын дүн (MNT)"
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    type="text"
+                    value={formatNumber(amount)}
+                    onChange={handleAmountChange}
                     fullWidth
                     required
+                    inputProps={{ maxLength: 10 }}
                   />
                 </Grid>
                 <Grid item xs={12}>

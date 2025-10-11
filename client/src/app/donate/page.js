@@ -57,6 +57,16 @@ const Donate = () => {
 
   const router = useRouter();
 
+  const handleAmountChange = (e) => {
+    const value = e.target.value.replace(/[^0-9]/g, "");
+    setAmount(value);
+  };
+
+  const formatNumber = (numStr) => {
+    if (!numStr) return "";
+    return new Intl.NumberFormat("en-US").format(parseInt(numStr, 10));
+  };
+
   useEffect(() => {
     if (qpayData && paymentStatus?.status !== "PAID") {
       const intervalId = setInterval(() => {
@@ -249,7 +259,7 @@ const Donate = () => {
                         ...params.InputProps,
                         startAdornment: (
                           <InputAdornment position="start">
-                            <SearchIcon />  хайх
+                            <SearchIcon /> хайх
                           </InputAdornment>
                         ),
                         endAdornment: (
@@ -267,11 +277,12 @@ const Donate = () => {
               )}
               <TextField
                 label="Хандивын дүн (MNT)"
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                type="text"
+                value={formatNumber(amount)}
+                onChange={handleAmountChange}
                 fullWidth
                 required
+                inputProps={{ maxLength: 10 }}
               />
               <TextField
                 label="Зурвас (заавал биш)"
