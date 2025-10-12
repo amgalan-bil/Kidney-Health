@@ -30,7 +30,6 @@ const Donors = ({ userId }) => {
           `/api/v1/users/userDonors/${userId}?page=${page}&limit=${limit}`
         );
 
-        console.log(data);
         
         if (data.success) {
           setDonations(data.donors);
