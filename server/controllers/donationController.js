@@ -264,77 +264,76 @@ export const qpayPaid = async (req, res) => {
   }
 };
 
-export const checkAllQpayPayments = async (req, res) => {
-  try {
-    // Find all donations that are still pending and have a QPay invoice ID
-    const pendingDonations = await donationModel.find({
-      status: "pending",
-      qpayInvoiceId: { $ne: null }, // Ensure we only get donations with an invoice ID
-    });
+export const processPendingQpayPayments = async () => {
+  // Find all donations that are still pending and have a QPay invoice ID
+  const pendingDonations = await donationModel.find({
+    status: "pending",
+    qpayInvoiceId: { $ne: null }, // Ensure we only get donations with an invoice ID
+  });
 
-    if (pendingDonations.length === 0) {
-      return res.json({
-        success: true,
-        message: "No pending donations to check.",
-        updates: [],
-        errors: [],
+  if (pendingDonations.length === 0) {
+    console.log("No pending donations to check.");
+    return { updates: [], errors: [] };
+  }
+
+  const token = await getQpayToken();
+  const paymentStatusUpdates = [];
+  const processingErrors = [];
+
+  for (const donation of pendingDonations) {
+    try {
+      const { data } = await axios.post(
+        `${QPAY_API_URL}/payment/check`,
+        {
+          object_type: "INVOICE",
+          object_id: donation.qpayInvoiceId,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (data.count > 0 && data.rows[0].payment_status === "PAID") {
+        if (donation.status !== "paid") {
+          donation.status = "paid";
+          donation.paymentId = data.rows[0].payment_id;
+          await donation.save();
+
+          await userModel.findByIdAndUpdate(donation.userId, {
+            $inc: { totalDonatedAmount: donation.amount },
+          });
+
+          paymentStatusUpdates.push({
+            donationId: donation._id,
+            status: "UPDATED_TO_PAID",
+          });
+        }
+      }
+    } catch (err) {
+      const errorMessage = err.response ? err.response.data : err.message;
+      console.error(
+        `Failed to check donation ${donation._id} (Invoice: ${donation.qpayInvoiceId}):`,
+        errorMessage
+      );
+      processingErrors.push({
+        donationId: donation._id,
+        invoiceId: donation.qpayInvoiceId,
+        error: errorMessage,
       });
     }
+  }
+  return { updates: paymentStatusUpdates, errors: processingErrors };
+};
 
-    const token = await getQpayToken();
-    const paymentStatusUpdates = [];
-    const processingErrors = [];
-
-    for (const donation of pendingDonations) {
-      try {
-        const { data } = await axios.post(
-          `${QPAY_API_URL}/payment/check`,
-          {
-            object_type: "INVOICE",
-            object_id: donation.qpayInvoiceId,
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        if (data.count > 0 && data.rows[0].payment_status === "PAID") {
-          // Check if status is not already 'paid' to avoid redundant DB updates
-          if (donation.status !== "paid") {
-            donation.status = "paid";
-            donation.paymentId = data.rows[0].payment_id;
-            await donation.save();
-
-            await userModel.findByIdAndUpdate(donation.userId, {
-              $inc: { totalDonatedAmount: donation.amount },
-            });
-
-            paymentStatusUpdates.push({
-              donationId: donation._id,
-              status: "UPDATED_TO_PAID",
-            });
-          }
-        }
-      } catch (err) {
-        // Log the specific error for the failed donation and continue
-        const errorMessage = err.response ? err.response.data : err.message;
-        console.error(
-          `Failed to check donation ${donation._id} (Invoice: ${donation.qpayInvoiceId}):`,
-          errorMessage
-        );
-        processingErrors.push({
-          donationId: donation._id,
-          invoiceId: donation.qpayInvoiceId,
-          error: errorMessage,
-        });
-      }
-    }
-
+// Update the existing controller to use the new function
+export const checkAllQpayPayments = async (req, res) => {
+  try {
+    const { updates, errors } = await processPendingQpayPayments();
     res.json({
       success: true,
       message: "Completed checking all pending donations.",
-      updates: paymentStatusUpdates,
-      errors: processingErrors,
+      updates,
+      errors,
     });
   } catch (error) {
     console.error(
