@@ -32,6 +32,7 @@ const Donate = () => {
   // Form State
   const [amount, setAmount] = useState("");
   const [name, setName] = useState("");
+  const [donorName, setDonorName] = useState("");
   const [message, setMessage] = useState("");
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -101,7 +102,8 @@ const Donate = () => {
 
   useEffect(() => {
     if (userData) {
-      setName(userData.name || "");
+      setName(userData.name);
+      setDonorName(userData.name);
       setSelectedUserId(userData.userId);
     } else {
       // Initial fetch for anonymous users
@@ -132,7 +134,7 @@ const Donate = () => {
     setPaymentStatus(null);
 
     const userId = userData ? userData.userId : selectedUserId;
-    const donorName = userData ? name : selectedUser?.name;
+    const sendingName = userData ? userData.name : donorName;
 
     if (!userId) {
       setError(
@@ -146,7 +148,7 @@ const Donate = () => {
       const data = await post("/api/v1/donation/create-invoice", {
         amount: parseInt(amount, 10),
         userId,
-        name: donorName,
+        name: sendingName,
         message,
       });
 
@@ -272,6 +274,14 @@ const Donate = () => {
                   )}
                 />
               )}
+              <TextField
+                label="Таны нэр"
+                value={donorName}
+                onChange={(e) => setDonorName(e.target.value)}
+                fullWidth
+                required
+                type="text"
+              />
               <TextField
                 label="Хандивын дүн (MNT)"
                 type="text"
