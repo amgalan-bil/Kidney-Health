@@ -22,13 +22,7 @@ import {
 } from "@mui/material";
 
 // MUI Icons
-import {
-  QrCode,
-  CreditCard,
-  ContentCopy,
-  Check,
-  ArrowBack,
-} from "@mui/icons-material";
+import { QrCode, CreditCard, ArrowBack } from "@mui/icons-material";
 
 import SearchIcon from "@mui/icons-material/Search";
 
@@ -40,6 +34,7 @@ const Donate = () => {
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   // User fetching state
   const [userOptions, setUserOptions] = useState([]);
@@ -137,6 +132,7 @@ const Donate = () => {
     setPaymentStatus(null);
 
     const userId = userData ? userData.userId : selectedUserId;
+    const donorName = userData ? name : selectedUser?.name;
 
     if (!userId) {
       setError(
@@ -150,7 +146,7 @@ const Donate = () => {
       const data = await post("/api/v1/donation/create-invoice", {
         amount: parseInt(amount, 10),
         userId,
-        name: name || userOptions.find((u) => u._id === selectedUserId)?.name,
+        name: donorName,
         message,
       });
 
@@ -230,6 +226,7 @@ const Donate = () => {
                   }
                   onChange={(event, newValue) => {
                     setSelectedUserId(newValue ? newValue._id : null);
+                    setSelectedUser(newValue);
                   }}
                   onInputChange={(event, newInputValue) => {
                     setUserSearch(newInputValue);

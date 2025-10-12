@@ -17,7 +17,6 @@ const Fundraisers = () => {
       const data = await get(`/api/v1/users/all?page=${page}&limit=12`);
       if (data && data.users) {
         setUsers(data.users);
-        console.log("data", data);
         
         setPagination(data.pagination);
       }
