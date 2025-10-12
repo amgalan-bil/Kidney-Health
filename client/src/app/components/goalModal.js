@@ -27,6 +27,16 @@ const GoalModal = ({ isOpen, onClose, onSave }) => {
     }
   };
 
+  const handleAmountChange = (e) => {
+    const value = e.target.value.replace(/[^0-9]/g, "");
+    setGoal(value);
+  };
+
+  const formatNumber = (numStr) => {
+    if (!numStr) return "";
+    return new Intl.NumberFormat("en-US").format(parseInt(numStr, 10));
+  };
+
   return (
     <Modal open={isOpen} onClose={onClose} aria-labelledby="goal-modal-title">
       <Box sx={style}>
@@ -40,11 +50,12 @@ const GoalModal = ({ isOpen, onClose, onSave }) => {
           id="goal"
           label="Goal Amount"
           name="goal"
-          type="number"
-          value={goal}
-          onChange={(e) => setGoal(e.target.value)}
+          type="text"
+          inputMode="numeric"
+          value={formatNumber(goal)}
+          onChange={handleAmountChange}
           placeholder="Enter amount"
-          InputProps={{ inputProps: { min: 0 } }}
+          InputProps={{ inputProps: { maxLength: 10 } }}
         />
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}

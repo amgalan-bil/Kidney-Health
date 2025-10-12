@@ -22,6 +22,7 @@ import {
   Link as MuiLink,
   Avatar,
 } from "@mui/material";
+import Donors from "./../../components/donors";
 const UserProfile = () => {
   const params = useParams();
   const { id } = params;
@@ -249,6 +250,7 @@ const UserProfile = () => {
           </Button>
         </Box>
       </Paper>
+      <Donors userId={id}/>
 
       {/* Donation Dialog */}
       <Dialog open={open} onClose={handleCloseDialog} fullWidth maxWidth="sm">

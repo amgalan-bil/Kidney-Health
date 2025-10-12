@@ -1,5 +1,6 @@
 import userModel from "../models/userModel.js";
 import jwt from "jsonwebtoken";
+import donationModel from "../models/donationModel.js";
 
 export const getUserData = async (req, res) => {
   console.log(req.cookies);
@@ -22,7 +23,6 @@ export const getUserData = async (req, res) => {
     }
 
     // Calculate the total amount raised from successful donations
-   
 
     const raisedAmount = user.totalDonatedAmount || 0;
     res.json({
@@ -113,6 +113,43 @@ export const getUserById = async (req, res) => {
   }
 };
 
+export const getUserDonors = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const skip = (page - 1) * limit;
+    const { id: userId } = req.params; // Get user ID from URL parameter
+
+    console.log(req.params.id);
+    
+
+    const donations = await donationModel
+      .find({ userId: userId, status:"paid" }) // Find donations for the specified user
+      .select("name message amount createdAt") // Select only relevant donation fields
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalDonations = await donationModel.countDocuments({
+      userId: req.params.id,
+    });
+
+    // The 'donations' array already contains the donor's name and message.
+    // We can send it directly.
+    res.json({
+      success: true,
+      donors: donations, // Each object in this array is a donation with donor's name
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalDonations / limit),
+        totalItems: totalDonations,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -134,7 +171,7 @@ export const getAllUsers = async (req, res) => {
       .select(
         "-password -__v -resetOtp -resetOtpExpireAt -verifyOtp -verifyOtpExpireAt"
       )
-      .sort({ totalDonatedAmount: -1, _id:1 })
+      .sort({ totalDonatedAmount: -1, _id: 1 })
       .skip(skip)
       .limit(limit);
 

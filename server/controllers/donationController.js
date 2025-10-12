@@ -18,7 +18,6 @@ const getQpayToken = async () => {
         password: QPAY_PASSWORD,
       },
     });
-    console.log("response", response.data);
 
     return response.data.access_token;
   } catch (error) {

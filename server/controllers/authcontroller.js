@@ -168,7 +168,6 @@ export const verifyEmail = async (req, res) => {
   try {
     const user = await userModel.findById(userId);
 
-    console.log(user);
 
     if (!user) {
       return res.json({ success: false, message: "User not found!" });

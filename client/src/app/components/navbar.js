@@ -11,6 +11,7 @@ import { AppContent } from "../context/AppContext";
 import { CircularProgress } from "@mui/material";
 import Image from "next/image";
 import GoalModal from "./goalModal";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 const AuthNav = ({ onSetGoalClick }) => {
   const { userData, logout, loading } = useContext(AppContent);
@@ -50,6 +51,13 @@ const AuthNav = ({ onSetGoalClick }) => {
         {isProfileMenuOpen && (
           <div className="absolute left-0 md:right-0 md:left-auto mt-2 w-56 bg-white rounded-lg shadow-xl py-1 z-50 ring-1 ring-black ring-opacity-5">
             <div className="px-4 py-3 border-b border-gray-200">
+              <Link
+                href={`/profile/${userData.userId}`}
+                className="bg-blue-500 hover:bg-blue-700 text-white  font-bold py-2 px-4 rounded flex items-center gap-2"
+              >
+                Миний профайл <ArrowForwardIcon />
+              </Link>
+
               <p className="text-base font-medium text-gray-800 truncate">
                 {userData?.name}
               </p>
@@ -196,6 +204,13 @@ const Navbar = () => {
             >
               <VolunteerActivismIcon fontSize="small" />
               <span>Хандив өгөх</span>
+            </Link>
+            <Link
+              href={`/profile/${userData.userId}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="bg-blue-500 hover:bg-blue-700 text-white text-center font-bold py-2 px-4 rounded flex items-center gap-2"
+            >
+              Миний профайл <ArrowForwardIcon />
             </Link>
             {userData ? (
               <button
