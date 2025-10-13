@@ -14,7 +14,7 @@ const Fundraisers = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true);
-      const data = await get(`/api/v1/users/all?page=${page}&limit=12`);
+      const data = await get(`/api/v1/users/all?page=${page}&limit=20`);
       if (data && data.users) {
         setUsers(data.users);
         

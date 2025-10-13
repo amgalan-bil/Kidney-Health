@@ -35,8 +35,6 @@ const AuthNav = ({ onSetGoalClick }) => {
     return <CircularProgress size={24} color="inherit" />;
   }
 
-  
-
   if (userData) {
     return (
       <div className="relative" ref={profileMenuRef}>
@@ -209,21 +207,25 @@ const Navbar = () => {
               <VolunteerActivismIcon fontSize="small" />
               <span>Хандив өгөх</span>
             </Link>
-            <Link
-              href={`/profile/${userData?.userId}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="bg-blue-500 hover:bg-blue-700 text-white text-center font-bold py-2 px-4 rounded flex items-center gap-2"
-            >
-              Миний профайл <ArrowForwardIcon />
-            </Link>
+
             {userData ? (
-              <button
-                className="inline-flex items-center justify-center px-6 py-3 border border-red-600 text-base font-medium rounded-md text-red-600 gap-2"
-                onClick={logout}
-              >
-                <LogoutIcon fontSize="small" />
-                Гарах
-              </button>
+              <>
+                {" "}
+                <Link
+                  href={`/profile/${userData?.userId}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="bg-blue-500 hover:bg-blue-700 text-white text-center font-bold py-2 px-4 rounded flex items-center gap-2"
+                >
+                  Миний профайл <ArrowForwardIcon />
+                </Link>
+                <button
+                  className="inline-flex items-center justify-center px-6 py-3 border border-red-600 text-base font-medium rounded-md text-red-600 gap-2"
+                  onClick={logout}
+                >
+                  <LogoutIcon fontSize="small" />
+                  Гарах
+                </button>
+              </>
             ) : (
               <Link
                 href="/login"
