@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
 
     goal: {
       type: Number,
-      default: 0,
+      default: 1000000,
     },
 
     verifyOtp: {
