@@ -132,6 +132,7 @@ export const getUserDonors = async (req, res) => {
 
     const totalDonations = await donationModel.countDocuments({
       userId: req.params.id,
+      status: "paid"
     });
 
     // The 'donations' array already contains the donor's name and message.
