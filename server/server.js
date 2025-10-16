@@ -21,6 +21,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 connectDB();
 
+const allowedOrigins = [
+  "http://localhost:3000", // Your local frontend
+  "https://www.brilliantmindsglobal.org", // IMPORTANT: Replace with your actual frontend URL
+];
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -28,12 +33,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow requests with no origin like Postman or curl
+      // Allow requests with no origin (like mobile apps or curl)
       if (!origin) return callback(null, true);
 
+      // Check if the origin is in the allowed list
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg =
+          "The CORS policy for this site does not allow access from the specified Origin.";
+        return callback(new Error(msg), false);
+      }
       return callback(null, true);
     },
-    credentials: true,
+    credentials: true, // Allow cookies to be sent
   })
 );
 app.get("/", (req, res) => {

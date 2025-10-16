@@ -11,8 +11,15 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const errorMessage = error.response?.data?.message || error.message;
-    console.error("API Error:", errorMessage);
+    // Handle 401 Unauthorized errors specifically
+    if (error.response?.status === 401) {
+      console.error("Authentication Error: The request was not authorized.");
+      // Here you could trigger a logout or redirect to the login page.
+      // For example: window.location.href = '/login';
+    } else {
+      const errorMessage = error.response?.data?.message || error.message;
+      console.error("API Error:", errorMessage);
+    }
     return Promise.reject(error);
   }
 );

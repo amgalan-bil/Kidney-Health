@@ -15,6 +15,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
 
   const onSubmitHandler = async (e) => {
+
     try {
       e.preventDefault();
       if (state === "Sign Up") {
@@ -40,6 +41,7 @@ const Login = () => {
           },
           { withCredentials: true }
         );
+
 
         if (data.success) {
           setIsLoggedin(true);
@@ -67,7 +69,7 @@ const Login = () => {
         <h2 className="text-3xl font-semibold text-white text-center mb-3">
           {state === "Sign Up" ? "Бүртгэл үүсгэх" : "Нэвтрэх"}
         </h2>
-      {/* asdf */}
+        {/* asdf */}
 
         <form onSubmit={onSubmitHandler}>
           {state === "Sign Up" && (

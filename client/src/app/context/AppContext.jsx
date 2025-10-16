@@ -17,6 +17,8 @@ export const AppContextProvider = (props) => {
   const getAuthState = async () => {
     try {
       const data = await get("/api/v1/auth/is-auth");
+
+
       if (data.success) {
         setIsLoggedin(true);
         await getUserData(); // Wait for user data to be fetched
@@ -37,6 +39,8 @@ export const AppContextProvider = (props) => {
   const getUserData = async () => {
     try {
       const data = await get("/api/v1/users/data");
+
+      
 
       if (data.success) {
         setUserData(data?.userData);
