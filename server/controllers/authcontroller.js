@@ -92,6 +92,7 @@ export const login = async (req, res) => {
       // Use secure cookies in production, but not in local http development
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      domain: process.env.NODE_ENV === "production" ? ".brilliantmindsglobal.org" : undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: "/",
     });
