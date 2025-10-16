@@ -24,6 +24,8 @@ connectDB();
 const allowedOrigins = [
   "http://localhost:3000", // Your local frontend
   "https://www.brilliantmindsglobal.org", // IMPORTANT: Replace with your actual frontend URL
+  "https://brilliantmindsglobal.org", // Add the non-www version just in case
+
 ];
 
 app.use(express.json());
