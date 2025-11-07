@@ -4,7 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import cron from "node-cron";
 
-import { processPendingQpayPayments } from "./controllers/donationController.js";
+// import { processPendingQpayPayments } from "./controllers/donationController.js";
 
 import connectDB from "./config/mongodb.js";
 import authRouter from "./routes/authRoutes.js";
@@ -53,15 +53,15 @@ app.get("/", (req, res) => {
   res.send("API Working");
 });
 
-cron.schedule("0 */3 * * *", async () => {
-  console.log("Running scheduled job: Checking pending QPay payments...");
-  try {
-    await processPendingQpayPayments();
-    console.log("Scheduled job finished successfully.");
-  } catch (error) {
-    console.error("Scheduled job failed:", error);
-  }
-});
+// cron.schedule("0 */3 * * *", async () => {
+//   console.log("Running scheduled job: Checking pending QPay payments...");
+//   try {
+//     await processPendingQpayPayments();
+//     console.log("Scheduled job finished successfully.");
+//   } catch (error) {
+//     console.error("Scheduled job failed:", error);
+//   }
+// });
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
