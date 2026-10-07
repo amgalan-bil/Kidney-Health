@@ -1,13 +1,53 @@
 import userModel from "../models/userModel.js";
 import donationModel from "../models/donationModel.js";
 import axios from "axios";
+import jwt from "jsonwebtoken";
+
+// Who is giving, from the session cookie. Null when nobody is signed in.
+// Deliberately not the userAuth middleware: that writes its id onto
+// req.body.userId, which on this route means the fundraiser being paid.
+const donorIdFrom = (req) => {
+  const { token } = req.cookies || {};
+  if (!token) return null;
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET).id ?? null;
+  } catch {
+    return null;
+  }
+};
 
 // --- QPay Configuration ---
-// IMPORTANT: Store these in environment variables (.env file) for security
-const QPAY_API_URL = "https://merchant.qpay.mn/v2"; // Use sandbox URL for testing
+const QPAY_API_URL = process.env.QPAY_API_URL || "https://merchant.qpay.mn/v2";
 const QPAY_USERNAME = process.env.QPAY_USERNAME;
 const QPAY_PASSWORD = process.env.QPAY_PASSWORD;
 const INVOICE_CODE = process.env.QPAY_INVOICE_CODE;
+
+// Where QPay sends the donor back to, and where we bounce them afterwards.
+const SERVER_URL = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 4000}`;
+const CLIENT_URL = (process.env.CLIENT_URL || "http://localhost:3000").split(",")[0].trim();
+
+// Marks a donation paid and credits the fundraiser, exactly once.
+// The { status: "pending" } filter is the guard: whichever of the three
+// confirmation paths (poll, callback, cron) arrives first wins the update,
+// and the losers match nothing, so the amount is never counted twice.
+const markDonationPaid = async (donationId, paymentId) => {
+  const donation = await donationModel.findOneAndUpdate(
+    { _id: donationId, status: "pending" },
+    { $set: { status: "paid", paymentId } },
+    { new: true }
+  );
+
+  if (!donation) return null;
+
+  // Campaign gifts belong to no one student, so there is no total to credit.
+  if (donation.userId) {
+    await userModel.findByIdAndUpdate(donation.userId, {
+      $inc: { totalDonatedAmount: donation.amount },
+    });
+  }
+
+  return donation;
+};
 
 // --- Helper function to get QPay Auth Token ---
 const getQpayToken = async () => {
@@ -32,12 +72,39 @@ const getQpayToken = async () => {
 // --- Controller to Create QPay Invoice ---
 export const createQpayInvoice = async (req, res) => {
   try {
+    // userId is the fundraiser being credited; it is absent when the gift goes
+    // straight to the campaign from the home page.
     const { amount, userId, name, message } = req.body;
 
-    if (!amount || !userId || !name) {
+    if (!amount || !name) {
       return res
         .status(400)
         .json({ success: false, message: "Missing required fields." });
+    }
+
+    // Donating requires an account, and the UI gate alone would not stop a
+    // request sent straight to this endpoint.
+    const donorId = donorIdFrom(req);
+    if (!donorId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Please sign in to donate." });
+    }
+
+    // Giving to yourself would raise your total without raising any money.
+    if (userId && donorId === userId.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot donate to your own fundraiser.",
+      });
+    }
+
+    if (!INVOICE_CODE) {
+      console.error("QPAY_INVOICE_CODE is not set - cannot create invoices.");
+      return res.status(500).json({
+        success: false,
+        message: "Payments are not configured on the server.",
+      });
     }
 
     const newDonation = new donationModel({
@@ -56,10 +123,12 @@ export const createQpayInvoice = async (req, res) => {
     const invoicePayload = {
       invoice_code: INVOICE_CODE,
       sender_invoice_no: newDonation._id.toString(),
-      invoice_receiver_code: newDonation.userId.toString(),
+      invoice_receiver_code: newDonation.userId
+        ? newDonation.userId.toString()
+        : "CAMPAIGN",
       invoice_description: `Donation from ${name}`,
       amount: newDonation.amount,
-      callback_url: `https://smile-for-mongolia.onrender.com/api/v1/donation/qpay?donationId=${newDonation._id.toString()}`,
+      callback_url: `${SERVER_URL}/api/v1/donation/qpay?donationId=${newDonation._id.toString()}`,
     };
 
     const { data } = await axios.post(
@@ -104,24 +173,12 @@ export const handleQpayWebhook = async (req, res) => {
 
   if (payment_status === "PAID") {
     try {
-      const donation = await donationModel.findById(donationId);
+      const donation = await markDonationPaid(donationId, req.body.payment_id);
 
-      if (donation && donation.status !== "paid") {
-        donation.status = "paid";
-        // You can store more details from the webhook body if needed
-        // donation.paymentId = req.body.payment_id;
-        await donation.save();
-
+      if (donation) {
         console.log(`Donation ${donationId} successfully marked as PAID.`);
-
-        // Optionally, increment a user's total raised amount here
-        await userModel.findByIdAndUpdate(donation.userId, {
-          $inc: { totalDonatedAmount: donation.amount },
-        });
-      } else if (donation && donation.status === "paid") {
-        console.log(`Donation ${donationId} was already marked as PAID.`);
-      } else if (!donation) {
-        console.error(`Webhook for non-existent donation ID: ${donationId}`);
+      } else {
+        console.log(`Donation ${donationId} was already settled or not found.`);
       }
     } catch (error) {
       console.error(
@@ -161,25 +218,18 @@ export const checkQpayPayment = async (req, res) => {
         qpayInvoiceId: invoiceId,
       });
 
-      if (donation && donation.status === "pending") {
-        donation.status = "paid";
-        donation.paymentId = data.rows[0].payment_id;
-        await donation.save();
-
-        await userModel.findByIdAndUpdate(donation.userId, {
-          $inc: { totalDonatedAmount: donation.amount },
-        });
+      if (donation) {
+        const settled = await markDonationPaid(
+          donation._id,
+          data.rows[0].payment_id
+        );
 
         return res.json({
           success: true,
           status: "PAID",
-          message: "Payment confirmed and updated.",
-        });
-      } else if (donation && donation.status === "paid") {
-        return res.json({
-          success: true,
-          status: "PAID",
-          message: "Payment was already confirmed.",
+          message: settled
+            ? "Payment confirmed and updated."
+            : "Payment was already confirmed.",
         });
       }
     }
@@ -205,17 +255,44 @@ export const qpayPaid = async (req, res) => {
   const { donationId } = req.query;
   console.log(`QPay callback received for donationId: ${donationId}`);
 
+  // Redirects go to the frontend; this route lives on the API host.
+  const fail = (reason) =>
+    res.redirect(`${CLIENT_URL}/payment/failed?reason=${reason}`);
+
+  // Where to send the donor afterwards: the fundraiser they gave to, or the
+  // campaign itself when the gift was not tied to one.
+  const done = (donation, outcome) =>
+    res.redirect(
+      donation.userId
+        ? `${CLIENT_URL}/profile/${donation.userId}?payment=${outcome}`
+        : `${CLIENT_URL}/?payment=${outcome}`
+    );
+
   if (!donationId) {
-    return res.redirect("/payment/failed?reason=invalid_callback");
+    return fail("invalid_callback");
   }
 
   try {
+    const donation = await donationModel.findById(donationId);
+    if (!donation) {
+      return fail("donation_not_found");
+    }
+
+    if (donation.status === "paid") {
+      return done(donation, "already_completed");
+    }
+
+    if (!donation.qpayInvoiceId) {
+      return fail("invoice_not_created");
+    }
+
     const token = await getQpayToken();
     const { data } = await axios.post(
       `${QPAY_API_URL}/payment/check`,
       {
         object_type: "INVOICE",
-        object_id: donationId,
+        // QPay knows this invoice by its own id, not by our Mongo _id.
+        object_id: donation.qpayInvoiceId,
         offset: {
           page_number: 1,
           page_limit: 100,
@@ -226,41 +303,20 @@ export const qpayPaid = async (req, res) => {
       }
     );
 
-    const donation = await donationModel.findById(donationId);
-    if (!donation) {
-      return res.redirect("/payment/failed?reason=donation_not_found");
+    const paid = (data.rows || []).find((r) => r.payment_status === "PAID");
+    if (!paid) {
+      return fail("payment_not_verified");
     }
 
-    // Check if payment was successful and donation is still pending
-    if (data.count > 0 && donation.status === "pending") {
-      const paymentInfo = data.rows[0]; // Get the first successful payment
-      if (paymentInfo.payment_status === "PAID") {
-        donation.status = "paid";
-        donation.paymentId = paymentInfo.payment_id; // Store QPay's payment ID
-        await donation.save();
+    await markDonationPaid(donation._id, paid.payment_id);
 
-        await userModel.findByIdAndUpdate(donation.userId, {
-          $inc: { totalDonatedAmount: donation.amount },
-        });
-
-        // Redirect to the user's profile page on success
-        return res.redirect(`/profile/${donation.userId}?payment=success`);
-      }
-    } else if (donation.status === "paid") {
-      // Already paid, just redirect
-      return res.redirect(
-        `/profile/${donation.userId}?payment=already_completed`
-      );
-    }
-
-    // If payment was not successful, redirect to a failure page
-    res.redirect(`/payment/failed?reason=payment_not_verified`);
+    return done(donation, "success");
   } catch (error) {
     console.error(
       "Error verifying QPay payment:",
       error.response ? error.response.data : error.message
     );
-    res.redirect("/payment/failed?reason=server_error");
+    return fail("server_error");
   }
 };
 
@@ -294,15 +350,12 @@ export const processPendingQpayPayments = async () => {
       );
 
       if (data.count > 0 && data.rows[0].payment_status === "PAID") {
-        if (donation.status !== "paid") {
-          donation.status = "paid";
-          donation.paymentId = data.rows[0].payment_id;
-          await donation.save();
+        const settled = await markDonationPaid(
+          donation._id,
+          data.rows[0].payment_id
+        );
 
-          await userModel.findByIdAndUpdate(donation.userId, {
-            $inc: { totalDonatedAmount: donation.amount },
-          });
-
+        if (settled) {
           paymentStatusUpdates.push({
             donationId: donation._id,
             status: "UPDATED_TO_PAID",

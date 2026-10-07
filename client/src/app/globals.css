@@ -1,26 +1,124 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #ffffff;
-}
+/*
+ * Kidney Khans campaign palette.
+ *
+ * Coral carries the calls to action, teal the supporting/"safe" states, ink the
+ * type, and cream the page itself. The hex values match the ones already baked
+ * into the components (button shadows, focus rings), so the whole site — including
+ * the sign-in and sign-up screens — stays in one palette.
+ */
+@theme {
+  --color-ink: #172b3a;
+  --color-ink-muted: #5f6d77;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-teal: #28968f;
+  --color-teal-soft: #dff0ee;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #ffffff;
-    --foreground: #ffffff;
+  --color-coral: #e2705f;
+  --color-coral-soft: #fdeae6;
+
+  --color-cream: #fffdf8;
+  --color-cream-deep: #f6efe4;
+
+  /* Card surface, a shade brighter than the warm page behind it. */
+  --color-paper: #ffffff;
+  /* The dark bands: hero, footer. */
+  --color-navy: #15293a;
+
+  /* shadcn slots, mapped onto the campaign palette. */
+  --color-primary: var(--color-coral);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--color-teal);
+  --color-secondary-foreground: #ffffff;
+  --color-ring: var(--color-teal);
+  --color-input: #e5ded1;
+  --color-destructive: #c2410c;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-manrope), var(--font-inter), ui-sans-serif, sans-serif;
+
+  /* Ambient motion: the hero blobs drift, the dialysis diagram pulses. */
+  --animate-breathe: breathe 7s ease-in-out infinite;
+  --animate-float: float 9s ease-in-out infinite;
+  --animate-flow: flow 2.4s linear infinite;
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 0.75; }
+    50% { transform: scale(1.06); opacity: 1; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
+  }
+  @keyframes flow {
+    to { stroke-dashoffset: -32; }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Sticky header clearance for the in-page nav anchors. */
+    scroll-padding-top: 5.5rem;
+  }
+
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: var(--color-coral);
+    color: #ffffff;
+  }
+}
+
+@layer components {
+  /* Small uppercase kicker above each section heading. */
+  .eyebrow {
+    font-weight: 700;
+    font-size: 0.75rem;
+    line-height: 1;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  /* Driven by <Reveal>, which flips data-reveal once the node scrolls into view. */
+  [data-reveal] {
+    transition:
+      opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  [data-reveal="hidden"] {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  [data-reveal="visible"] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  [data-reveal],
+  [data-reveal="hidden"],
+  [data-reveal="visible"] {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

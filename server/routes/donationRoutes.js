@@ -4,6 +4,7 @@ import {
   createQpayInvoice,
   checkQpayPayment,
   checkAllQpayPayments,
+  handleQpayWebhook,
 } from "../controllers/donationController.js";
 
 const donationRouter = express.Router();
@@ -17,5 +18,8 @@ donationRouter.get("/check-all-payments", checkAllQpayPayments); // New route fo
 
 // Callback route that QPay redirects to after payment
 donationRouter.get("/qpay", qpayPaid);
+
+// Server-to-server webhook from QPay (fires even if the donor closed the tab)
+donationRouter.post("/qpay", handleQpayWebhook);
 
 export default donationRouter;

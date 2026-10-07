@@ -2,11 +2,12 @@ import mongoose from "mongoose";
 
 const donationSchema = new mongoose.Schema(
   {
-    // The user receiving the donation
+    // The fundraiser this gift is credited to. Null for gifts made straight to
+    // the campaign from the home page, which belong to no one student.
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      default: null,
     },
     amount: {
       type: Number,

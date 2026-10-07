@@ -1,0 +1,288 @@
+export const en = {
+  meta: {
+    title: 'Every Child Deserves Treatment · Kidney Khans',
+    description:
+      'A student-led fundraising campaign supporting pediatric kidney and endocrine care in Mongolia. Help us raise $30,000.',
+  },
+  brand: 'Kidney Khans',
+  brandSub: "Children's Kidney Health 2026",
+  nav: {
+    fundraisers: 'Fundraisers',
+    donate: 'Donate',
+    switchLabel: 'Language',
+    signIn: 'Sign in',
+    signUp: 'Sign up',
+    myPage: 'My fundraiser page',
+    signOut: 'Sign out',
+  },
+  hero: {
+    eyebrow: "Children's Kidney Health Fundraising 2026",
+    titleLine1: 'Every Child',
+    titleLine2: 'Deserves Treatment',
+    lead: 'A student-led fundraising campaign supporting pediatric kidney and endocrine care in Mongolia.',
+    goal: '$30,000 fundraising goal',
+    partner:
+      'National Center for Maternal and Child Health • Kidney & Endocrinology Department',
+    donate: 'Donate now',
+    learn: 'Learn more',
+    care: 'CARE',
+  },
+  why: {
+    eyebrow: 'Why this matters',
+    title: 'One specialized unit. Hundreds of children.',
+    lead: 'Pediatric kidney care depends on sustained access to treatment and equipment.',
+    stats: [
+      {
+        value: '700–800',
+        countUp: true,
+        label:
+          'children with kidney problems receive care from this department each year.',
+      },
+      {
+        value: '1,200–1,500',
+        countUp: true,
+        label: 'hemodialysis treatment sessions are performed annually.',
+      },
+      {
+        value: 'Since 2013',
+        countUp: false,
+        label:
+          'the hemodialysis unit has continuously provided this life-sustaining care.',
+      },
+    ],
+    goalLabel: 'Our main goal',
+    goal: 'Help children with renal and endocrine disorders achieve and maintain better health.',
+  },
+  hemo: {
+    eyebrow: 'Treatment, explained',
+    title: 'What is hemodialysis?',
+    body: 'Hemodialysis removes waste and excess fluid from the blood when the kidneys cannot work adequately. For children with kidney failure, it can be a crucial, life-sustaining treatment while they await recovery or transplantation.',
+    steps: [
+      {
+        title: 'Blood flows to the filter',
+        body: 'Blood travels from the patient into the dialysis circuit.',
+      },
+      {
+        title: 'Waste + fluid are removed',
+        body: 'The dialyzer filters toxins and excess water from the blood.',
+      },
+      {
+        title: 'Cleaned blood returns',
+        body: 'Filtered blood is safely returned to the patient.',
+      },
+    ],
+    banner:
+      'For a child, reliable dialysis access can protect survival, growth, and development.',
+  },
+  practice: {
+    callout: 'Your support helps strengthen access to this essential care.',
+    diagram: {
+      patient: 'Patient',
+      dialyzer: 'Dialyzer',
+      out: 'Blood out',
+      back: 'Clean blood back',
+    },
+  },
+  campaign: {
+    eyebrow: 'The campaign',
+    title: 'Our goal: raise $30,000',
+    lead: "Approximately 105,000,000 MNT, based on the campaign's stated conversion.",
+    circleValue: '$30K',
+    circleLabel: 'Campaign goal',
+    whoTitle: 'Who participates?',
+    who: 'All students in the 2026 Program, sponsors, and anyone who values meaningful community service.',
+    howTitle: 'How can we raise it?',
+    how: 'Use creative, ethical fundraising methods—bake sales, school events, community outreach, sponsorships, or team-based campaigns.',
+  },
+  fundraisers: {
+    eyebrow: 'Student fundraisers',
+    title: 'Every student sets a goal.',
+    lead: 'Each student in the program runs their own fundraiser page. Pick one to support, or start your own.',
+    raised: '{amount} raised',
+    goal: 'Goal {amount}',
+    seeAll: 'See all fundraisers',
+    start: 'Start your fundraiser',
+    myPage: 'Go to my fundraiser page',
+    empty: 'No fundraisers yet. Be the first.',
+    error: "Couldn't load fundraisers. Please refresh the page.",
+  },
+  learnPage: {
+    back: 'Back to home',
+    eyebrow: 'Learn more',
+    title: 'Why children\'s kidney care needs you',
+    lead: 'How the Kidney & Endocrinology Department cares for children across Mongolia, what treatment involves, and what this campaign will fund.',
+  },
+  fundraisersPage: {
+    eyebrow: 'Fundraisers',
+    title: 'All student fundraisers',
+    lead: 'Browse the students raising money for the campaign, and support one of them.',
+    prev: 'Previous',
+    next: 'Next',
+    page: 'Page {page} of {total}',
+  },
+  profile: {
+    own: {
+      title: 'This is your page',
+      body: "You can't donate to your own fundraiser. Share the link instead — every gift from someone else counts toward your goal.",
+      copy: 'Copy link',
+      copied: 'Link copied',
+    },
+    eyebrow: 'Student fundraiser',
+    support: 'Support {name}',
+    supportLead: "Every donation made on this page counts toward {name}'s goal.",
+    donations: 'Recent donations',
+    noDonations: 'No donations yet. Yours could be the first.',
+    yourPage:
+      'This is your fundraiser page. Share the link so people can give toward your goal.',
+    editGoal: 'Edit goal',
+    goalInput: 'Your goal (₮)',
+    save: 'Save',
+    cancel: 'Cancel',
+    goalError: 'Please enter a goal of ₮1,000 or more.',
+    saveError: "Couldn't save your goal. Please try again.",
+    copyLink: 'Copy link',
+    copied: 'Link copied',
+    notFound: "We couldn't find this fundraiser.",
+    loadError: "Couldn't load this fundraiser. Please refresh the page.",
+    back: 'All fundraisers',
+    anonymous: 'Anonymous',
+  },
+  me: {
+    loading: 'Setting up your fundraiser page…',
+    error: "We couldn't open your fundraiser page. Please try again.",
+    retry: 'Try again',
+  },
+  auth: {
+    signInTitle: 'Welcome back',
+    signInLead: 'Sign in to see how your fundraiser is doing and update your goal.',
+    signUpTitle: 'Start your fundraiser',
+    signUpLead:
+      'Create an account to get your own fundraiser page with a goal people can give toward.',
+    nameLabel: 'Your name',
+    emailLabel: 'Email',
+    passwordLabel: 'Password',
+    signInSubmit: 'Sign in',
+    signUpSubmit: 'Create account',
+    forgot: 'Forgot your password?',
+    noAccount: "Don't have an account?",
+    haveAccount: 'Already have an account?',
+    signInLink: 'Sign in',
+    signUpLink: 'Sign up',
+    errors: {
+      name: 'Please enter your name.',
+      email: 'Please enter your email address.',
+      password: 'Your password needs at least 8 characters.',
+      generic: 'That did not work. Please check your details and try again.',
+    },
+  },
+  reset: {
+    title: 'Reset your password',
+    leadEmail: "Enter your email and we'll send you a 6-digit code.",
+    leadOtp: 'Enter the code we emailed you, then choose a new password.',
+    emailLabel: 'Email',
+    otpLabel: '6-digit code',
+    newPasswordLabel: 'New password',
+    sendCode: 'Send code',
+    submit: 'Set new password',
+    back: 'Use a different email',
+    doneTitle: 'Password updated',
+    doneBody: 'You can now sign in with your new password.',
+    toSignIn: 'Back to sign in',
+    errors: {
+      email: 'Please enter your email address.',
+      otp: 'Enter the 6-digit code from your email.',
+      password: 'Your new password needs at least 8 characters.',
+      generic: 'That did not work. Please try again.',
+    },
+  },
+  payment: {
+    failedTitle: "We couldn't confirm your payment",
+    reassure:
+      'If money did leave your account, the donation is confirmed automatically within 5 minutes. Please wait a moment and check your page.',
+    tryAgain: 'Try again',
+    home: 'Back to home',
+    reasons: {
+      invalid_callback: 'The payment response was not valid.',
+      donation_not_found: 'We could not find that donation record.',
+      invoice_not_created: 'The invoice was never created.',
+      payment_not_verified: 'The payment has not been confirmed yet.',
+      server_error: 'Something went wrong on our side.',
+      unknown: 'An unknown error occurred.',
+    },
+  },
+  donate: {
+    eyebrow: 'Please stand with children in Mongolia',
+    titleLine1: 'Together, we can help make',
+    titleLine2: 'life-sustaining care more reachable.',
+    goal: '$30,000',
+    goalSub: '≈ ₮105,000,000',
+    tagline: 'one shared goal • one student community • lasting impact',
+    gate: {
+      title: 'Please sign in to donate',
+      body: 'Donations are made from an account so we can send you a receipt and keep your giving history in one place. It takes a moment.',
+      signUp: 'Create an account',
+      signIn: 'I already have one',
+    },
+    regionLabel: 'Where are you giving from?',
+    regionInternational: 'International',
+    regionInternationalSub: 'Card · Donorbox (USD)',
+    regionMongolia: 'Mongolia',
+    regionMongoliaSub: 'QPay · bank app (₮)',
+  },
+  international: {
+    title: 'Give from abroad',
+    subtitle: 'International card donations go through our Donorbox page, in USD.',
+    button: 'Donate on Donorbox',
+    note: "Donorbox gifts support the campaign as a whole. To count toward a specific student's goal, give with QPay.",
+    secure: 'Card details are handled by Donorbox. This site never sees or stores them.',
+  },
+  qpay: {
+    title: 'Donate with QPay',
+    subtitle: 'Pay securely from your Mongolian bank app.',
+    amountLabel: 'Choose an amount',
+    presets: [10_000, 30_000, 50_000, 100_000],
+    customLabel: 'Other amount',
+    customPlaceholder: 'Enter another amount',
+    nameLabel: 'Your name (optional)',
+    messageLabel: 'Message (optional)',
+    anonymous: 'Anonymous',
+    submit: 'Donate {amount}',
+    creating: 'Creating invoice…',
+    scanTitle: 'Scan the QR code',
+    scanBody: 'Open your bank app and scan this code with QPay to pay {amount}.',
+    appsLabel: 'Paying on your phone? Pick your bank',
+    waiting: 'Waiting for payment…',
+    cancel: 'Back',
+    successTitle: 'Thank you!',
+    successBody: "Your donation of {amount} was received and counts toward {name}'s goal.",
+    successBodyCampaign: "Your donation of {amount} was received. Thank you for supporting children's kidney care.",
+    again: 'Make another donation',
+    secure:
+      'QPay and your bank process the payment. This site never sees or stores your bank details.',
+    errors: {
+      min: 'Please enter at least ₮1,000.',
+      max: 'For gifts over ₮100,000,000, please contact the campaign team.',
+      generic: 'Something went wrong. Please try again.',
+    },
+  },
+  footer: {
+    thanks: 'Thank you',
+    line: "Children's Kidney Health · Mongolia",
+    campaign: 'A student-led fundraising campaign · 2026',
+    partner:
+      'In support of the National Center for Maternal and Child Health, Kidney & Endocrinology Department.',
+    top: 'Back to top',
+  },
+};
+
+type Widen<T> = T extends string
+  ? string
+  : T extends number
+    ? number
+    : T extends boolean
+      ? boolean
+      : T extends readonly (infer U)[]
+        ? Widen<U>[]
+        : { [K in keyof T]: Widen<T[K]> };
+
+export type Dictionary = Widen<typeof en>;
