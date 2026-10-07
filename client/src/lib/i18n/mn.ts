@@ -2,11 +2,11 @@ import type { Dictionary } from './en';
 
 export const mn: Dictionary = {
   meta: {
-    title: 'Хүүхэд бүр эмчлүүлэх эрхтэй · Kidney Khans',
+    title: 'Хүүхэд бүр эмчлүүлэх эрхтэй · HopeBridge',
     description:
       'Монголын хүүхдийн бөөр, дотоод шүүрлийн эмчилгээг дэмжих сурагчдын санаачилсан хандивын аян. $30,000 цуглуулахад бидэнтэй нэгдээрэй.',
   },
-  brand: 'Kidney Khans',
+  brand: 'HopeBridge',
   brandSub: 'Хүүхдийн бөөрний эрүүл мэнд 2026',
   nav: {
     fundraisers: 'Хандив цуглуулагчид',

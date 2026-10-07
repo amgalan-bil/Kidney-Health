@@ -1,10 +1,10 @@
 export const en = {
   meta: {
-    title: 'Every Child Deserves Treatment · Kidney Khans',
+    title: 'Every Child Deserves Treatment · HopeBridge',
     description:
       'A student-led fundraising campaign supporting pediatric kidney and endocrine care in Mongolia. Help us raise $30,000.',
   },
-  brand: 'Kidney Khans',
+  brand: 'HopeBridge',
   brandSub: "Children's Kidney Health 2026",
   nav: {
     fundraisers: 'Fundraisers',
