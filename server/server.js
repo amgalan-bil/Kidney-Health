@@ -41,7 +41,8 @@ const startServer = async () => {
 const allowedOrigins = [
   ...(process.env.CLIENT_URL || "")
     .split(",")
-    .map((o) => o.trim())
+    // Browsers send Origin without a trailing slash, so "https://site.app/" would never match.
+    .map((o) => o.trim().replace(/\/+$/, ""))
     .filter(Boolean),
   "http://localhost:3000",
   "http://127.0.0.1:3000",

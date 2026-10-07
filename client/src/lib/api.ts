@@ -2,12 +2,13 @@
  * Client for the Express API in /server: fundraiser records and QPay donations.
  * The API authenticates with an httpOnly `token` cookie set by /api/v1/auth/login,
  * so every request is sent with credentials rather than an Authorization header.
+ *
+ * Requests go to this site's own /api/v1, which next.config.mjs proxies to the
+ * Express server. Keeping the API on the same origin makes the session cookie
+ * first-party; mobile Safari drops it when it's set by a different domain, which
+ * left phone users stuck on the sign-in page.
  */
-// Production builds default to the Render deployment so the live site works even
-// when NEXT_PUBLIC_API_URL is missing from the Vercel project settings.
-const DEFAULT_API_URL =
-  process.env.NODE_ENV === 'production' ? 'https://kidney-health-xvqo.onrender.com' : 'http://localhost:4000';
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL).replace(/\/+$/, '');
+const API_URL = '';
 
 export type Fundraiser = {
   _id: string;
