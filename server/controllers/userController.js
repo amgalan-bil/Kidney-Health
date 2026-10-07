@@ -93,6 +93,67 @@ export const updateUserGoal = async (req, res) => {
   }
 };
 
+const DESCRIPTION_MAX_LENGTH = 2000;
+
+export const updateUserDescription = async (req, res) => {
+  try {
+    // Authenticate the user from the token in cookies
+    const { token } = req.cookies;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authorized, no token" });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    // An empty string is allowed: it clears the description
+    const { description } = req.body;
+    if (typeof description !== "string") {
+      return res
+        .status(400)
+        .json({ success: false, message: "A description is required." });
+    }
+    const trimmed = description.trim();
+    if (trimmed.length > DESCRIPTION_MAX_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        message: `Description must be ${DESCRIPTION_MAX_LENGTH} characters or fewer.`,
+      });
+    }
+
+    const updatedUser = await userModel
+      .findByIdAndUpdate(
+        userId,
+        { description: trimmed },
+        { new: true, runValidators: true }
+      )
+      .select("-password");
+
+    if (!updatedUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    res.json({
+      success: true,
+      message: "Description updated successfully.",
+      user: updatedUser,
+    });
+  } catch (error) {
+    if (
+      error.name === "JsonWebTokenError" ||
+      error.name === "TokenExpiredError"
+    ) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authorized, token failed" });
+    }
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const getUserById = async (req, res) => {
   try {
     const user = await userModel

@@ -146,6 +146,17 @@ export const en = {
     loadError: "Couldn't load this fundraiser. Please refresh the page.",
     back: 'All fundraisers',
     anonymous: 'Anonymous',
+    story: {
+      title: 'About this fundraiser',
+      emptyOwn: "Tell donors what you're raising money for and why it matters to you. People give more when they know the story.",
+      add: 'Add a description',
+      edit: 'Edit description',
+      label: 'What are you fundraising for?',
+      placeholder: "For example: who you're raising money for, what it will pay for, and why you care.",
+      count: '{count} / {max}',
+      tooLong: 'Please keep it to {max} characters or fewer.',
+      saveError: "Couldn't save your description. Please try again.",
+    },
   },
   me: {
     loading: 'Setting up your fundraiser page…',

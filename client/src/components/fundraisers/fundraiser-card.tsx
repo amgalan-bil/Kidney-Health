@@ -69,7 +69,10 @@ export function FundraiserCard({
         </h3>
         <span className="font-display text-sm font-extrabold text-teal">{String(rank).padStart(2, '0')}</span>
       </div>
-      <div className="mt-7">
+      {fundraiser.description && (
+        <p className="mt-5 line-clamp-2 text-sm leading-relaxed break-words text-ink-muted">{fundraiser.description}</p>
+      )}
+      <div className="mt-auto pt-7">
         <ProgressBar percent={percent} />
         <div className="mt-3 flex items-baseline justify-between gap-3 text-sm">
           <span className="font-semibold text-teal tabular-nums">

@@ -10,6 +10,7 @@ import { PageIntro } from '@/components/page-intro';
 import { useAccount } from '@/components/account/account-provider';
 import { DonateCard } from '@/components/donate/donate-card';
 import { DonationList } from './donation-list';
+import { FundraiserStory } from './fundraiser-story';
 import { GoalEditor } from './goal-editor';
 import { InitialAvatar, ProgressBar } from './fundraiser-card';
 
@@ -109,6 +110,16 @@ export function FundraiserProfile({ id, locale, t }: { id: string; locale: Local
       </PageIntro>
 
       <section className="bg-cream py-16 sm:py-24">
+        {(fundraiser.description || isOwn) && (
+          <div className="mx-auto mb-12 max-w-6xl px-5 sm:px-8 lg:mb-16">
+            <FundraiserStory
+              description={fundraiser.description ?? ''}
+              isOwn={isOwn}
+              t={t}
+              onSaved={(description) => setState({ status: 'ready', fundraiser: { ...fundraiser, description } })}
+            />
+          </div>
+        )}
         <div className="mx-auto grid max-w-6xl gap-12 px-5 sm:px-8 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
           <div className="h-fit rounded-[2rem] bg-paper p-6 shadow-[0_40px_90px_-50px_rgb(23_43_58/0.5)] ring-1 ring-ink/5 sm:p-10">
             <h2 className="font-display text-2xl font-extrabold text-ink">

@@ -15,6 +15,8 @@ export type Fundraiser = {
   name: string;
   goal: number;
   totalDonatedAmount: number;
+  /** What they're raising money for; empty or missing until they write one. */
+  description?: string;
 };
 
 export type Donation = {
@@ -104,6 +106,16 @@ export function updateGoal(goal: number) {
   return request<{ user: Fundraiser }>('/api/v1/users/goal', {
     method: 'PATCH',
     body: JSON.stringify({ goal }),
+  });
+}
+
+/** Longest description the API accepts, in characters. */
+export const DESCRIPTION_MAX_LENGTH = 2000;
+
+export function updateDescription(description: string) {
+  return request<{ user: Fundraiser }>('/api/v1/users/description', {
+    method: 'PATCH',
+    body: JSON.stringify({ description }),
   });
 }
 

@@ -34,6 +34,14 @@ const userSchema = new mongoose.Schema(
       default: 1800000,
     },
 
+    // What the fundraiser is raising money for, shown on their public page
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 2000,
+    },
+
     verifyOtp: {
       type: String,
       default: "",
