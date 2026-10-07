@@ -76,11 +76,11 @@ export const en = {
   },
   practice: {
     callout: 'Your support helps strengthen access to this essential care.',
-    diagram: {
-      patient: 'Patient',
-      dialyzer: 'Dialyzer',
-      out: 'Blood out',
-      back: 'Clean blood back',
+    equipment: {
+      machine: 'Hemodialysis machine',
+      machineAlt: 'A hemodialysis machine with blood lines and a dialyzer, beside a treatment chair',
+      water: 'Water treatment system',
+      waterAlt: 'A deionization water treatment system for a hemodialysis department, next to a patient connected to blood lines',
     },
   },
   campaign: {
