@@ -13,7 +13,9 @@ import { DonationSuccess, FormError } from './status';
 
 const MIN_MNT = 1_000;
 const MAX_MNT = 100_000_000;
-const POLL_MS = 3_000;
+const POLL_MS = 4_000;
+/** Stop asking after this long; a donor coming back to the tab still triggers one check. */
+const POLL_FOR_MS = 15 * 60_000;
 
 export type Recipient = { id: string; name: string };
 
@@ -209,7 +211,15 @@ function InvoiceView({
       }
     };
 
-    const timer = window.setInterval(check, POLL_MS);
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      if (Date.now() - startedAt > POLL_FOR_MS) {
+        window.clearInterval(timer);
+        return;
+      }
+      // A hidden tab doesn't need answers; the visibility handler catches up on return.
+      if (document.visibilityState === 'visible') void check();
+    }, POLL_MS);
     // Donors often leave for their bank app and come back; check right away when they do.
     const onVisible = () => {
       if (document.visibilityState === 'visible') void check();

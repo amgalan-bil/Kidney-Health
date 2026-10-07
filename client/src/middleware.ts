@@ -25,7 +25,6 @@ const legacyPaths: Record<string, string> = {
 /** Visitors without a language prefix go to /en or /mn based on their browser language. */
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (/^\/(api|trpc)(\/|$)/.test(pathname)) return;
 
   const firstSegment = pathname.split('/')[1] ?? '';
   if (isLocale(firstSegment)) return;
@@ -47,7 +46,7 @@ export default function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Skip Next.js internals and static files
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api|trpc)(.*)',
+    // Skip API calls too: they're proxied to Express and the locale redirect never applies.
+    '/((?!_next|api/|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
   ],
 };

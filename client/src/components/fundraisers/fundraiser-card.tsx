@@ -60,6 +60,8 @@ export function FundraiserCard({
   return (
     <Link
       href={`/${locale}/profile/${fundraiser._id}`}
+      // One prefetch per card adds up as the list grows; hovering still prefetches.
+      prefetch={false}
       className="group flex h-full flex-col rounded-3xl bg-paper p-7 ring-1 ring-ink/5 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_30px_60px_-35px_rgb(23_43_58/0.35)]"
     >
       <div className="flex items-center gap-4">
