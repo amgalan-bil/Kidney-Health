@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import { Inter, Manrope } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import { getDictionary, isLocale, locales } from '@/lib/i18n';
 import { AccountProvider } from '@/components/account/account-provider';
 import '../globals.css';
@@ -51,6 +52,7 @@ export default async function RootLayout({
     <html lang={lang} className={`${inter.variable} ${manrope.variable}`}>
       <body>
         <AccountProvider>{children}</AccountProvider>
+        <Analytics />
       </body>
     </html>
   );

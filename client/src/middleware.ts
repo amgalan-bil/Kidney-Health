@@ -47,6 +47,7 @@ export const config = {
   matcher: [
     // Skip Next.js internals and static files
     // Skip API calls too: they're proxied to Express and the locale redirect never applies.
-    '/((?!_next|api/|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // And Vercel Analytics, whose page-view beacons would otherwise be redirected to /en/_vercel/….
+    '/((?!_next|_vercel|api/|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
   ],
 };

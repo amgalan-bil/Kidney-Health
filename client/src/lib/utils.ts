@@ -36,7 +36,7 @@ export function fill(template: string, values: Record<string, string>) {
 
 /**
  * Share of a goal reached, 0–100, left unrounded. A first ₮2,000 against a
- * ₮1,800,000 goal is 0.11%, and rounding that to a flat 0 here would tell the
+ * ₮2,700,000 goal is 0.07%, and rounding that to a flat 0 here would tell the
  * bar and the label there is nothing to show.
  */
 export function progressPercent(raised: number, goal: number) {
