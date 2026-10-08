@@ -82,17 +82,10 @@ export const createQpayInvoice = async (req, res) => {
         .json({ success: false, message: "Missing required fields." });
     }
 
-    // Donating requires an account, and the UI gate alone would not stop a
-    // request sent straight to this endpoint.
+    // Anyone can donate without an account. If the donor is signed in, though,
+    // giving to yourself would raise your total without raising any money.
     const donorId = donorIdFrom(req);
-    if (!donorId) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Please sign in to donate." });
-    }
-
-    // Giving to yourself would raise your total without raising any money.
-    if (userId && donorId === userId.toString()) {
+    if (userId && donorId && donorId === userId.toString()) {
       return res.status(400).json({
         success: false,
         message: "You cannot donate to your own fundraiser.",

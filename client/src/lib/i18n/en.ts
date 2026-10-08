@@ -164,7 +164,7 @@ export const en = {
     retry: 'Try again',
     offer: {
       title: 'Start a fundraiser?',
-      body: 'Get your own page with a goal people can give toward, and share it with friends and family. Or skip this — your account works just fine for donating.',
+      body: 'Get your own page with a goal people can give toward, and share it with friends and family. Or skip it for now — you can start one any time.',
       start: 'Start my fundraiser',
       notNow: 'Not now',
       error: "Couldn't start your fundraiser. Please try again.",
@@ -175,7 +175,7 @@ export const en = {
     signInLead: 'Sign in to see how your fundraiser is doing and update your goal.',
     signUpTitle: 'Create your account',
     signUpLead:
-      'Sign up to donate. You can also start your own fundraiser page whenever you like.',
+      'An account is only needed to run a fundraiser — anyone can donate without one.',
     nameLabel: 'Your name',
     emailLabel: 'Email',
     passwordLabel: 'Password',
@@ -235,12 +235,6 @@ export const en = {
     goal: '$30,000',
     goalSub: '≈ ₮105,000,000',
     tagline: 'one shared goal • one student community • lasting impact',
-    gate: {
-      title: 'Please sign in to donate',
-      body: 'Donations are made from an account so we can send you a receipt and keep your giving history in one place. It takes a moment.',
-      signUp: 'Create an account',
-      signIn: 'I already have one',
-    },
     regionLabel: 'Where are you giving from?',
     regionInternational: 'International',
     regionInternationalSub: 'Card · Donorbox (USD)',

@@ -27,7 +27,7 @@ export function DonateCard({
   const copy = region === 'international' ? t.international : t.qpay;
 
   return (
-    <DonationGate copy={t.donate.gate} locale={locale} fundraiserId={fundraiser.id} ownCopy={t.profile.own}>
+    <DonationGate fundraiserId={fundraiser.id} ownCopy={t.profile.own}>
       <RegionSwitch
         value={region}
         label={t.donate.regionLabel}

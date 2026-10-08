@@ -1,35 +1,29 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Check, Copy, Loader2, LockKeyhole, Share2 } from 'lucide-react';
-import type { Dictionary, Locale } from '@/lib/i18n';
+import { Check, Copy, Loader2, Share2 } from 'lucide-react';
+import type { Dictionary } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { useAccount } from '@/components/account/account-provider';
 
 /**
- * Donations are only offered to signed-in people. While the session is still
- * being checked this shows a placeholder, so the donation form never flashes
- * up and then disappears underneath someone who is already signed in.
+ * Anyone can donate, signed in or not. The one exception is a fundraiser on
+ * their own page, who gets a nudge to share it instead. While the session is
+ * still being checked this shows a placeholder, so the donation form never
+ * flashes up and then disappears underneath them.
  */
 export function DonationGate({
-  copy,
-  locale,
   fundraiserId,
   ownCopy,
   children,
 }: {
-  copy: Dictionary['donate']['gate'];
-  locale: Locale;
   /** The fundraiser being given to, so we can spot someone on their own page. */
   fundraiserId?: string;
   ownCopy?: Dictionary['profile']['own'];
   children: ReactNode;
 }) {
   const { account, status } = useAccount();
-  const pathname = usePathname();
 
   if (status === 'loading') {
     return (
@@ -54,29 +48,7 @@ export function DonationGate({
     );
   }
 
-  if (account) return <>{children}</>;
-
-  // Send them back to whatever they were reading once they are signed in.
-  const next = pathname ? `?next=${encodeURIComponent(pathname)}` : '';
-
-  return (
-    <div className="animate-in fade-in py-4 text-center duration-500">
-      <span className="mx-auto grid size-14 place-items-center rounded-full bg-teal-soft">
-        <LockKeyhole className="size-6 text-teal" />
-      </span>
-      <h3 className="font-display mt-6 text-xl font-extrabold text-ink">{copy.title}</h3>
-      <p className="mx-auto mt-3 max-w-sm leading-relaxed text-ink-muted">{copy.body}</p>
-
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-        <Button asChild size="lg">
-          <Link href={`/${locale}/sign-up${next}`}>{copy.signUp}</Link>
-        </Button>
-        <Button asChild size="lg" variant="outline" className="text-ink">
-          <Link href={`/${locale}/sign-in${next}`}>{copy.signIn}</Link>
-        </Button>
-      </div>
-    </div>
-  );
+  return <>{children}</>;
 }
 
 /** Copies the current page URL, so a student can share their own fundraiser. */
