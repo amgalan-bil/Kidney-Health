@@ -48,7 +48,7 @@ export default async function PaymentFailedPage({
 
             <div className="mt-10 flex flex-wrap justify-center gap-3">
               <Button asChild size="lg">
-                <Link href={`/${lang}#fundraisers`}>{copy.tryAgain}</Link>
+                <Link href={`/${lang}#donate`}>{copy.tryAgain}</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
                 <Link href={`/${lang}`}>{copy.home}</Link>

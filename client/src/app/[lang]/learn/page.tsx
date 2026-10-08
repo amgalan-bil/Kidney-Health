@@ -42,7 +42,7 @@ export default async function LearnPage({ params }: { params: Promise<{ lang: st
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/70">{t.learnPage.lead}</p>
           <div className="mt-9">
             <Button asChild size="lg">
-              <Link href={`/${lang}#fundraisers`}>
+              <Link href={`/${lang}#donate`}>
                 {t.hero.donate}
                 <ArrowRight />
               </Link>

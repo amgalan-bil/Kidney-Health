@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { ApiError, getFundraiser, isFundraiserId, type Fundraiser } from '@/lib/api';
 import type { Dictionary, Locale } from '@/lib/i18n';
-import { fill, formatMnt, formatPercent, progressPercent } from '@/lib/utils';
+import { fill, formatMoney, formatPercent, progressPercent } from '@/lib/utils';
 import { PageIntro } from '@/components/page-intro';
 import { useAccount } from '@/components/account/account-provider';
 import { DonateCard } from '@/components/donate/donate-card';
@@ -69,6 +69,7 @@ export function FundraiserProfile({ id, locale, t }: { id: string; locale: Local
 
   const { fundraiser } = state;
   const isOwn = account?.userId === fundraiser._id;
+  const name = isOwn && account ? account.name : fundraiser.name;
   const percent = progressPercent(fundraiser.totalDonatedAmount, fundraiser.goal);
 
   return (
@@ -79,15 +80,15 @@ export function FundraiserProfile({ id, locale, t }: { id: string; locale: Local
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-700">
             <p className="eyebrow text-teal">{t.profile.eyebrow}</p>
             <div className="mt-5 flex items-center gap-5">
-              <InitialAvatar name={fundraiser.name} className="size-16 rounded-3xl bg-coral text-2xl text-white sm:size-20 sm:text-3xl" />
+              <InitialAvatar name={name} className="size-16 rounded-3xl bg-coral text-2xl text-white sm:size-20 sm:text-3xl" />
               <h1 className="font-display min-w-0 text-4xl leading-[1.05] font-extrabold tracking-tight break-words sm:text-5xl">
-                {fundraiser.name}
+                {name}
               </h1>
             </div>
             <div className="mt-10 max-w-xl">
               <div className="flex items-end justify-between gap-4">
                 <p className="font-display text-4xl font-extrabold text-teal tabular-nums sm:text-5xl">
-                  {formatMnt(fundraiser.totalDonatedAmount)}
+                  {formatMoney(fundraiser.totalDonatedAmount, locale)}
                 </p>
                 <p className="font-display text-2xl font-extrabold text-white/80 tabular-nums">{formatPercent(percent)}</p>
               </div>
@@ -95,7 +96,7 @@ export function FundraiserProfile({ id, locale, t }: { id: string; locale: Local
                 <ProgressBar percent={percent} tone="dark" />
               </div>
               <p className="mt-3 text-sm font-semibold text-white/60 tabular-nums">
-                {fill(t.fundraisers.goal, { amount: formatMnt(fundraiser.goal) })}
+                {fill(t.fundraisers.goal, { amount: formatMoney(fundraiser.goal, locale) })}
               </p>
             </div>
           </div>
@@ -123,9 +124,9 @@ export function FundraiserProfile({ id, locale, t }: { id: string; locale: Local
         <div className="mx-auto grid max-w-6xl gap-12 px-5 sm:px-8 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
           <div className="h-fit rounded-[2rem] bg-paper p-6 shadow-[0_40px_90px_-50px_rgb(23_43_58/0.5)] ring-1 ring-ink/5 sm:p-10">
             <h2 className="font-display text-2xl font-extrabold text-ink">
-              {fill(t.profile.support, { name: fundraiser.name })}
+              {fill(t.profile.support, { name })}
             </h2>
-            <p className="mt-1.5 text-ink-muted">{fill(t.profile.supportLead, { name: fundraiser.name })}</p>
+            <p className="mt-1.5 text-ink-muted">{fill(t.profile.supportLead, { name })}</p>
             <div className="mt-7">
               <DonateCard
                 t={t}

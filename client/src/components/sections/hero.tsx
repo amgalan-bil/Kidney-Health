@@ -35,7 +35,7 @@ export function Hero({ t, locale }: { t: Dictionary; locale: Locale }) {
           </Reveal>
           <Reveal delay={500} className="mt-8 flex flex-wrap gap-3">
             <Button asChild size="lg">
-              <a href="#fundraisers">
+              <a href="#donate">
                 {t.hero.donate}
                 <ArrowRight />
               </a>

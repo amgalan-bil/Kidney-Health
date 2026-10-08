@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, MessageCircle } from 'lucide-react';
 import { listDonations, type Donation, type Page } from '@/lib/api';
 import type { Dictionary, Locale } from '@/lib/i18n';
-import { fill, formatMnt } from '@/lib/utils';
+import { fill, formatMoney } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { InitialAvatar } from './fundraiser-card';
 
@@ -74,7 +74,7 @@ export function DonationList({
                 <div className="flex items-baseline justify-between gap-3">
                   <p className="truncate font-semibold text-ink">{donation.name || t.profile.anonymous}</p>
                   <p className="font-display shrink-0 font-extrabold text-teal tabular-nums">
-                    {formatMnt(donation.amount)}
+                    {formatMoney(donation.amount, locale)}
                   </p>
                 </div>
                 {donation.message && (

@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { Locale } from '@/lib/i18n/config';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -7,6 +8,25 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatMnt(amount: number) {
   return `₮${new Intl.NumberFormat('en-US').format(amount)}`;
+}
+
+/**
+ * Tugriks per US dollar, used only to show amounts in dollars on the English
+ * site. Matches the campaign's own $30,000 ≈ ₮105,000,000. Money is always
+ * stored and paid in tugriks.
+ */
+export const MNT_PER_USD = 3_500;
+
+/** A tugrik amount in the reader's currency: dollars in English, tugriks in Mongolian. */
+export function formatMoney(mnt: number, locale: Locale) {
+  if (locale === 'mn') return formatMnt(mnt);
+  const usd = mnt / MNT_PER_USD;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    // Small gifts keep their cents so ₮1,000 doesn't read as "$0".
+    maximumFractionDigits: usd < 10 ? 2 : 0,
+  }).format(usd);
 }
 
 /** Replaces `{key}` placeholders in a copy string. */

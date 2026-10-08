@@ -9,8 +9,8 @@ import { QPayDonation, type Recipient } from './qpay-donation';
 import { DonationGate } from './donation-gate';
 
 /**
- * The donation panel. It always gives to a named fundraiser, so a donor can see
- * who their money reaches before they choose how to pay.
+ * The donation panel. Given a fundraiser, gifts count toward their goal;
+ * without one they go to the campaign as a whole.
  */
 export function DonateCard({
   t,
@@ -20,14 +20,14 @@ export function DonateCard({
 }: {
   t: Dictionary;
   locale: Locale;
-  fundraiser: Recipient;
+  fundraiser?: Recipient;
   onPaid?: () => void;
 }) {
   const [region, setRegion] = useState<Region>(defaultRegionFor[locale]);
   const copy = region === 'international' ? t.international : t.qpay;
 
   return (
-    <DonationGate fundraiserId={fundraiser.id} ownCopy={t.profile.own}>
+    <DonationGate fundraiserId={fundraiser?.id} ownCopy={t.profile.own}>
       <RegionSwitch
         value={region}
         label={t.donate.regionLabel}

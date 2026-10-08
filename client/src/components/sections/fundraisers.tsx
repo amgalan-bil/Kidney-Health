@@ -8,12 +8,15 @@ import { Button } from '@/components/ui/button';
 import { FundraiserCard, FundraiserCardSkeleton } from '@/components/fundraisers/fundraiser-card';
 import { StartFundraiserButton } from '@/components/fundraisers/start-fundraiser-button';
 import { useFundraisers } from '@/components/fundraisers/use-fundraisers';
+import { GeneralDonation } from '@/components/donate/general-donation';
 import { SectionHeading } from './section-heading';
 
 const TOP = 6;
+/** Fundraisers offered in the donation box's picker. One request feeds both it and the cards. */
+const PICKER_LIMIT = 100;
 
 export function Fundraisers({ t, locale }: { t: Dictionary; locale: Locale }) {
-  const state = useFundraisers(1, TOP);
+  const state = useFundraisers(1, PICKER_LIMIT);
 
   return (
     <section id="fundraisers" className="bg-paper py-12 sm:py-16">
@@ -44,7 +47,7 @@ export function Fundraisers({ t, locale }: { t: Dictionary; locale: Locale }) {
                       <FundraiserCardSkeleton />
                     </li>
                   ))
-                : state.fundraisers.map((fundraiser, i) => (
+                : state.fundraisers.slice(0, TOP).map((fundraiser, i) => (
                     <li key={fundraiser._id} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                       <FundraiserCard fundraiser={fundraiser} rank={i + 1} locale={locale} t={t} />
                     </li>
@@ -52,6 +55,12 @@ export function Fundraisers({ t, locale }: { t: Dictionary; locale: Locale }) {
             </ul>
           )}
         </div>
+
+        <GeneralDonation
+          t={t}
+          locale={locale}
+          fundraisers={state.status === 'ready' ? state.fundraisers : []}
+        />
       </div>
     </section>
   );

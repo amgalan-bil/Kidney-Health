@@ -61,7 +61,7 @@ export function SiteHeader({ locale, t }: { locale: Locale; t: Dictionary }) {
           <LanguageSwitch locale={locale} label={t.nav.switchLabel} tone={scrolled ? 'light' : 'dark'} />
           <AuthControls locale={locale} t={t} />
           <Button asChild size="sm" className="hidden sm:inline-flex">
-            <Link href={`${home}#fundraisers`}>{t.nav.donate}</Link>
+            <Link href={`${home}#donate`}>{t.nav.donate}</Link>
           </Button>
         </div>
       </div>

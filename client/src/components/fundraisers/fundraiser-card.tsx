@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Fundraiser } from '@/lib/api';
 import type { Dictionary, Locale } from '@/lib/i18n';
-import { cn, fill, formatMnt, formatPercent, progressPercent } from '@/lib/utils';
+import { cn, fill, formatMoney, formatPercent, progressPercent } from '@/lib/utils';
 
 export function InitialAvatar({ name, className }: { name: string; className?: string }) {
   return (
@@ -78,11 +78,11 @@ export function FundraiserCard({
         <ProgressBar percent={percent} />
         <div className="mt-3 flex items-baseline justify-between gap-3 text-sm">
           <span className="font-semibold text-teal tabular-nums">
-            {fill(t.fundraisers.raised, { amount: formatMnt(fundraiser.totalDonatedAmount) })}
+            {fill(t.fundraisers.raised, { amount: formatMoney(fundraiser.totalDonatedAmount, locale) })}
             <span className="ml-1.5 font-normal text-ink-muted">{formatPercent(percent)}</span>
           </span>
           <span className="text-ink-muted tabular-nums">
-            {fill(t.fundraisers.goal, { amount: formatMnt(fundraiser.goal) })}
+            {fill(t.fundraisers.goal, { amount: formatMoney(fundraiser.goal, locale) })}
           </span>
         </div>
       </div>

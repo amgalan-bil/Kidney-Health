@@ -16,7 +16,7 @@ function preferredLocale(request: NextRequest): Locale {
 
 /** Pages from the previous version of the site, so old shared links still land somewhere useful. */
 const legacyPaths: Record<string, string> = {
-  '/donate': '#fundraisers',
+  '/donate': '#donate',
   '/thank-you': '',
   '/login': '/sign-in',
   '/reset-password': '/reset-password',

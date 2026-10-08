@@ -104,6 +104,16 @@ export function getAccount() {
   return request<{ userData: Account }>('/api/v1/users/data');
 }
 
+/** Longest name the API accepts, in characters. */
+export const NAME_MAX_LENGTH = 60;
+
+export function updateName(name: string) {
+  return request<{ user: Fundraiser }>('/api/v1/users/name', {
+    method: 'PATCH',
+    body: JSON.stringify({ name }),
+  });
+}
+
 export function updateGoal(goal: number) {
   return request<{ user: Fundraiser }>('/api/v1/users/goal', {
     method: 'PATCH',

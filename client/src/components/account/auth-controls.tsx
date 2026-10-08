@@ -1,16 +1,18 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { HeartHandshake, LogOut, UserRound } from 'lucide-react';
+import { Check, HeartHandshake, Loader2, LogOut, Pencil, UserRound } from 'lucide-react';
 import type { Dictionary, Locale } from '@/lib/i18n';
+import { ApiError, NAME_MAX_LENGTH } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAccount } from './account-provider';
 
 /** Sign in / sign up when signed out; a small account menu when signed in. */
 export function AuthControls({ locale, t }: { locale: Locale; t: Dictionary }) {
-  const { account, status, signOut } = useAccount();
+  const { account, status, signOut, updateName } = useAccount();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -36,6 +38,8 @@ export function AuthControls({ locale, t }: { locale: Locale; t: Dictionary }) {
   return (
     <AccountMenu
       name={account.name}
+      t={t}
+      onRename={updateName}
       // Without a fundraiser there's no page yet; offer to start one instead.
       myPageLabel={account.isFundraiser ? t.nav.myPage : t.fundraisers.start}
       signOutLabel={t.nav.signOut}
@@ -50,19 +54,49 @@ export function AuthControls({ locale, t }: { locale: Locale; t: Dictionary }) {
 
 function AccountMenu({
   name,
+  t,
+  onRename,
   myPageLabel,
   signOutLabel,
   href,
   onSignOut,
 }: {
   name: string;
+  t: Dictionary;
+  onRename: (name: string) => Promise<void>;
   myPageLabel: string;
   signOutLabel: string;
   href: string;
   onSignOut: () => void | Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const wrapper = useRef<HTMLDivElement>(null);
+
+  // Closing the menu also abandons a half-typed name.
+  useEffect(() => {
+    if (!open) setRenaming(false);
+  }, [open]);
+
+  async function handleRename(event: FormEvent) {
+    event.preventDefault();
+    const next = draft.trim();
+    if (!next) return setError(t.nav.nameError);
+    setSaving(true);
+    setError(null);
+    try {
+      await onRename(next);
+      setRenaming(false);
+    } catch (err) {
+      // A taken name comes back as a 409 with a message worth showing as-is.
+      setError(err instanceof ApiError && err.status === 409 ? err.message : t.nav.nameSaveError);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -98,12 +132,55 @@ function AccountMenu({
       {open && (
         <div
           role="menu"
-          className="animate-in fade-in zoom-in-95 absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-2xl bg-white p-1.5 shadow-[0_24px_60px_-24px_rgb(23_43_58/0.45)] ring-1 ring-ink/10 duration-150"
+          className="animate-in fade-in zoom-in-95 absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl bg-white p-1.5 shadow-[0_24px_60px_-24px_rgb(23_43_58/0.45)] ring-1 ring-ink/10 duration-150"
         >
           <p className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-ink">
             <UserRound className="size-4 shrink-0 text-ink-muted" />
             <span className="truncate">{name}</span>
           </p>
+          {renaming ? (
+            <form onSubmit={handleRename} className="px-3 pt-1 pb-3" noValidate>
+              <label className="block">
+                <span className="text-xs font-semibold text-ink-muted">{t.nav.nameLabel}</span>
+                <Input
+                  autoFocus
+                  autoComplete="name"
+                  maxLength={NAME_MAX_LENGTH}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  className="mt-1.5 h-10"
+                />
+              </label>
+              {error && (
+                <p role="alert" className="mt-2 text-xs font-medium text-destructive">
+                  {error}
+                </p>
+              )}
+              <div className="mt-3 flex gap-2">
+                <Button type="submit" size="sm" disabled={saving}>
+                  {saving ? <Loader2 className="animate-spin" /> : <Check />}
+                  {t.nav.saveName}
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => setRenaming(false)}>
+                  {t.nav.cancel}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <button
+              role="menuitem"
+              type="button"
+              onClick={() => {
+                setDraft(name);
+                setError(null);
+                setRenaming(true);
+              }}
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-ink transition hover:bg-cream-deep"
+            >
+              <Pencil className="size-4 shrink-0 text-ink-muted" />
+              {t.nav.changeName}
+            </button>
+          )}
           <div className="my-1 h-px bg-ink/8" />
           <Link
             role="menuitem"
