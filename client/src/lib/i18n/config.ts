@@ -16,4 +16,4 @@ export const defaultRegionFor = {
 } as const satisfies Record<Locale, Region>;
 
 /** International card donations (the campaign's existing Donorbox page). */
-export const DONORBOX_URL = 'https://donorbox.org/little-faces-big-smile';
+export const DONORBOX_URL = 'https://donorbox.org/hopebridge-971296?preview=1791418782';
