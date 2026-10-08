@@ -12,7 +12,7 @@ import { useAccount } from './account-provider';
 /**
  * Sign-in and sign-up against the Express API's cookie session
  * (/api/v1/auth/login and /register). On success the visitor goes back to
- * wherever they were, or to their own fundraiser page after signing up.
+ * wherever they were, or to /me, which offers to start a fundraiser.
  */
 export function AuthForm({ mode, locale, t }: { mode: 'sign-in' | 'sign-up'; locale: Locale; t: Dictionary }) {
   const { signIn, signUp } = useAccount();
@@ -39,15 +39,11 @@ export function AuthForm({ mode, locale, t }: { mode: 'sign-in' | 'sign-up'; loc
 
     setBusy(true);
     try {
-      if (isSignUp) {
-        await signUp(name.trim(), email.trim(), password);
-        router.push(`/${locale}/me`);
-      } else {
-        await signIn(email.trim(), password);
-        // `next` is set by the header so signing in returns you to your page.
-        const next = params.get('next');
-        router.push(next && next.startsWith('/') ? next : `/${locale}/me`);
-      }
+      if (isSignUp) await signUp(name.trim(), email.trim(), password);
+      else await signIn(email.trim(), password);
+      // `next` is set by links like the header's, so you come back to that page.
+      const next = params.get('next');
+      router.push(next && next.startsWith('/') ? next : `/${locale}/me`);
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : copy.errors.generic);
       setBusy(false);

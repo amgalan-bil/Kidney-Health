@@ -99,6 +99,12 @@ export const createQpayInvoice = async (req, res) => {
       });
     }
 
+    if (userId && !(await userModel.exists({ _id: userId, isFundraiser: true }))) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Fundraiser not found." });
+    }
+
     if (!INVOICE_CODE) {
       console.error("QPAY_INVOICE_CODE is not set - cannot create invoices.");
       return res.status(500).json({

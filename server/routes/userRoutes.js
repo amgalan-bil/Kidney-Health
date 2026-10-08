@@ -7,11 +7,13 @@ import {
   updateUserGoal,
   updateUserDescription,
   getUserDonors,
+  startFundraiser,
 } from "../controllers/userController.js";
 
 const userRouter = express.Router();
 
 userRouter.get("/data", getUserData);
+userRouter.post("/fundraiser", startFundraiser);
 userRouter.patch("/goal", updateUserGoal);
 userRouter.patch("/description", updateUserDescription);
 userRouter.get("/all", getAllUsers);

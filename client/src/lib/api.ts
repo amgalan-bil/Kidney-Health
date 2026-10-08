@@ -33,6 +33,8 @@ export type Account = {
   name: string;
   goal: number;
   raisedAmount: number;
+  /** False until they choose to start a fundraiser; until then they have no public page. */
+  isFundraiser: boolean;
 };
 
 export type QPayBankLink = {
@@ -107,6 +109,11 @@ export function updateGoal(goal: number) {
     method: 'PATCH',
     body: JSON.stringify({ goal }),
   });
+}
+
+/** Gives the signed-in account its own public fundraiser page. */
+export function startFundraiser() {
+  return request<{ user: Fundraiser }>('/api/v1/users/fundraiser', { method: 'POST' });
 }
 
 /** Longest description the API accepts, in characters. */

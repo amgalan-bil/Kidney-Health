@@ -159,16 +159,23 @@ export const en = {
     },
   },
   me: {
-    loading: 'Setting up your fundraiser page…',
-    error: "We couldn't open your fundraiser page. Please try again.",
+    loading: 'Loading your account…',
+    error: "We couldn't open your account. Please try again.",
     retry: 'Try again',
+    offer: {
+      title: 'Start a fundraiser?',
+      body: 'Get your own page with a goal people can give toward, and share it with friends and family. Or skip this — your account works just fine for donating.',
+      start: 'Start my fundraiser',
+      notNow: 'Not now',
+      error: "Couldn't start your fundraiser. Please try again.",
+    },
   },
   auth: {
     signInTitle: 'Welcome back',
     signInLead: 'Sign in to see how your fundraiser is doing and update your goal.',
-    signUpTitle: 'Start your fundraiser',
+    signUpTitle: 'Create your account',
     signUpLead:
-      'Create an account to get your own fundraiser page with a goal people can give toward.',
+      'Sign up to donate. You can also start your own fundraiser page whenever you like.',
     nameLabel: 'Your name',
     emailLabel: 'Email',
     passwordLabel: 'Password',

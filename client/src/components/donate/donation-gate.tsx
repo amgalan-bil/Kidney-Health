@@ -69,7 +69,7 @@ export function DonationGate({
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
         <Button asChild size="lg">
-          <Link href={`/${locale}/sign-up`}>{copy.signUp}</Link>
+          <Link href={`/${locale}/sign-up${next}`}>{copy.signUp}</Link>
         </Button>
         <Button asChild size="lg" variant="outline" className="text-ink">
           <Link href={`/${locale}/sign-in${next}`}>{copy.signIn}</Link>

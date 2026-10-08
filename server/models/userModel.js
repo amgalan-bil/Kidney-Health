@@ -29,6 +29,12 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // Accounts are for giving by default; a fundraiser page is opt-in.
+    isFundraiser: {
+      type: Boolean,
+      default: false,
+    },
+
     goal: {
       type: Number,
       default: 1800000,

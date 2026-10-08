@@ -36,9 +36,10 @@ export function AuthControls({ locale, t }: { locale: Locale; t: Dictionary }) {
   return (
     <AccountMenu
       name={account.name}
-      myPageLabel={t.nav.myPage}
+      // Without a fundraiser there's no page yet; offer to start one instead.
+      myPageLabel={account.isFundraiser ? t.nav.myPage : t.fundraisers.start}
       signOutLabel={t.nav.signOut}
-      href={`/${locale}/profile/${account.userId}`}
+      href={account.isFundraiser ? `/${locale}/profile/${account.userId}` : `/${locale}/me`}
       onSignOut={async () => {
         await signOut();
         router.push(`/${locale}`);

@@ -32,6 +32,7 @@ export const getUserData = async (req, res) => {
         name: user.name,
         goal: user.goal,
         raisedAmount: raisedAmount,
+        isFundraiser: user.isFundraiser,
       },
     });
   } catch (error) {
@@ -80,6 +81,41 @@ export const updateUserGoal = async (req, res) => {
       message: "Goal updated successfully.",
       user: updatedUser,
     });
+  } catch (error) {
+    if (
+      error.name === "JsonWebTokenError" ||
+      error.name === "TokenExpiredError"
+    ) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authorized, token failed" });
+    }
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Turns the signed-in account into a fundraiser with its own public page.
+export const startFundraiser = async (req, res) => {
+  try {
+    const { token } = req.cookies;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authorized, no token" });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const updatedUser = await userModel
+      .findByIdAndUpdate(decoded.id, { isFundraiser: true }, { new: true })
+      .select("-password");
+
+    if (!updatedUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    res.json({ success: true, user: updatedUser });
   } catch (error) {
     if (
       error.name === "JsonWebTokenError" ||
@@ -162,7 +198,8 @@ export const getUserById = async (req, res) => {
         "-password -__v -resetOtp -resetOtpExpireAt -verifyOtp -verifyOtpExpireAt"
       );
 
-    if (!user) {
+    // Accounts that haven't started a fundraiser have no public page.
+    if (!user || !user.isFundraiser) {
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
@@ -219,14 +256,16 @@ export const getAllUsers = async (req, res) => {
     const search = req.query.search || "";
     const skip = (page - 1) * limit;
 
+    // Only accounts that started a fundraiser are listed.
     const query = search
       ? {
+          isFundraiser: true,
           $or: [
             { name: { $regex: search, $options: "i" } },
             { email: { $regex: search, $options: "i" } },
           ],
         }
-      : {};
+      : { isFundraiser: true };
 
     const users = await userModel
       .find(query)

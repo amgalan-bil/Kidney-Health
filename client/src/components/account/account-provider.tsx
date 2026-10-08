@@ -6,6 +6,7 @@ import {
   login as apiLogin,
   logout as apiLogout,
   register as apiRegister,
+  startFundraiser as apiStartFundraiser,
   updateGoal as saveGoal,
   type Account,
 } from '@/lib/api';
@@ -18,6 +19,7 @@ type AccountState = {
   status: Status;
   reload: () => Promise<void>;
   updateGoal: (goal: number) => Promise<void>;
+  startFundraiser: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -82,9 +84,14 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     setAccount((current) => (current ? { ...current, goal: user.goal } : current));
   }, []);
 
+  const startFundraiser = useCallback(async () => {
+    await apiStartFundraiser();
+    setAccount((current) => (current ? { ...current, isFundraiser: true } : current));
+  }, []);
+
   return (
     <AccountContext.Provider
-      value={{ account, status, reload, updateGoal, signIn, signUp, signOut }}
+      value={{ account, status, reload, updateGoal, startFundraiser, signIn, signUp, signOut }}
     >
       {children}
     </AccountContext.Provider>
