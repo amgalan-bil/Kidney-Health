@@ -28,9 +28,9 @@ const CLIENT_URL = (process.env.CLIENT_URL || "http://localhost:3000").split(","
 
 // Marks a donation paid and credits the fundraiser, exactly once.
 // The { status: "pending" } filter is the guard: whichever of the three
-// confirmation paths (poll, callback, cron) arrives first wins the update,
+// confirmation paths (poll, callback, cron, or Donorbox) arrives first wins the update,
 // and the losers match nothing, so the amount is never counted twice.
-const markDonationPaid = async (donationId, paymentId) => {
+export const markDonationPaid = async (donationId, paymentId) => {
   const donation = await donationModel.findOneAndUpdate(
     { _id: donationId, status: "pending" },
     { $set: { status: "paid", paymentId } },

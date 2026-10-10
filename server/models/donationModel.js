@@ -29,6 +29,26 @@ const donationSchema = new mongoose.Schema(
       enum: ["pending", "paid", "failed"],
       default: "pending",
     },
+    // How it was paid: QPay from Mongolia, or a card on Donorbox from abroad.
+    source: {
+      type: String,
+      enum: ["qpay", "donorbox"],
+      default: "qpay",
+    },
+    // Donorbox's donation ID; unique so a gift seen twice is stored once.
+    donorboxId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    // What the donor actually paid on Donorbox (e.g. 50 USD). `amount` is
+    // always that converted to tugriks.
+    currency: {
+      type: String,
+    },
+    originalAmount: {
+      type: Number,
+    },
     // QPay's internal invoice ID, received on creation
     qpayInvoiceId: {
       type: String,

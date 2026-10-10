@@ -6,6 +6,7 @@ import {
   checkAllQpayPayments,
   handleQpayWebhook,
 } from "../controllers/donationController.js";
+import { handleDonorboxWebhook } from "../controllers/donorboxController.js";
 
 const donationRouter = express.Router();
 
@@ -21,5 +22,8 @@ donationRouter.get("/qpay", qpayPaid);
 
 // Server-to-server webhook from QPay (fires even if the donor closed the tab)
 donationRouter.post("/qpay", handleQpayWebhook);
+
+// Webhook from Donorbox for international card gifts
+donationRouter.post("/donorbox", handleDonorboxWebhook);
 
 export default donationRouter;

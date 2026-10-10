@@ -5,6 +5,10 @@ import cookieParser from "cookie-parser";
 import cron from "node-cron";
 
 import { processPendingQpayPayments } from "./controllers/donationController.js";
+import {
+  donorboxConfigured,
+  syncDonorboxDonations,
+} from "./controllers/donorboxController.js";
 
 import connectDB from "./config/mongodb.js";
 import authRouter from "./routes/authRoutes.js";
@@ -97,6 +101,24 @@ cron.schedule("*/5 * * * *", async () => {
     console.error("Payment sweep failed:", error.message);
   }
 });
+
+// Same backstop for Donorbox: picks up gifts whose webhook never arrived, and
+// on its first run backfills everything given before the webhook existed.
+if (donorboxConfigured()) {
+  cron.schedule("*/10 * * * *", async () => {
+    try {
+      const recorded = await syncDonorboxDonations();
+      if (recorded) console.log(`Donorbox sweep: ${recorded} gifts recorded.`);
+    } catch (error) {
+      console.error(
+        "Donorbox sweep failed:",
+        error.response ? error.response.data : error.message
+      );
+    }
+  });
+} else {
+  console.warn("DONORBOX_EMAIL / DONORBOX_API_KEY not set: Donorbox gifts won't be recorded.");
+}
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
