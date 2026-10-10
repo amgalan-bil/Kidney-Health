@@ -261,7 +261,7 @@ export const en = {
     title: 'Give from abroad',
     subtitle: 'International card donations go through our Donorbox page, in USD.',
     button: 'Donate on Donorbox',
-    note: "Donorbox gifts support the campaign as a whole. To count toward a specific student's goal, give with QPay.",
+    note: 'Gifts are charged in USD and usually show up here within a few minutes.',
     secure: 'Card details are handled by Donorbox. This site never sees or stores them.',
   },
   qpay: {

@@ -43,7 +43,7 @@ export function DonateCard({
         <p className="mt-1.5 text-ink-muted">{copy.subtitle}</p>
         <div key={region} className="animate-in fade-in mt-7 duration-500">
           {region === 'international' ? (
-            <InternationalDonation copy={t.international} />
+            <InternationalDonation copy={t.international} fundraiser={fundraiser} />
           ) : (
             <QPayDonation copy={t.qpay} fundraiser={fundraiser} onPaid={onPaid} />
           )}
