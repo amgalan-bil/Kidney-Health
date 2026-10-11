@@ -8,12 +8,14 @@ import {
   updateUserDescription,
   getUserDonors,
   startFundraiser,
+  updateUserName,
 } from "../controllers/userController.js";
 
 const userRouter = express.Router();
 
 userRouter.get("/data", getUserData);
 userRouter.post("/fundraiser", startFundraiser);
+userRouter.patch("/name", updateUserName);
 userRouter.patch("/goal", updateUserGoal);
 userRouter.patch("/description", updateUserDescription);
 userRouter.get("/all", getAllUsers);

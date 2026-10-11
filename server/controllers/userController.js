@@ -129,6 +129,64 @@ export const startFundraiser = async (req, res) => {
   }
 };
 
+const NAME_MAX_LENGTH = 60;
+
+// Changes the signed-in account's display name, which is also the name on their
+// fundraiser page. Past donations keep the name they were made under.
+export const updateUserName = async (req, res) => {
+  try {
+    const { token } = req.cookies;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authorized, no token" });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const { name } = req.body;
+    const trimmed = typeof name === "string" ? name.trim() : "";
+    if (!trimmed) {
+      return res
+        .status(400)
+        .json({ success: false, message: "A name is required." });
+    }
+    if (trimmed.length > NAME_MAX_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        message: `Name must be ${NAME_MAX_LENGTH} characters or fewer.`,
+      });
+    }
+    if (await userModel.isNameTaken(trimmed, decoded.id)) {
+      return res.status(409).json({
+        success: false,
+        message: "That name is already taken. Please choose another.",
+      });
+    }
+
+    const updatedUser = await userModel
+      .findByIdAndUpdate(decoded.id, { name: trimmed }, { new: true })
+      .select("-password");
+
+    if (!updatedUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    res.json({ success: true, user: updatedUser });
+  } catch (error) {
+    if (
+      error.name === "JsonWebTokenError" ||
+      error.name === "TokenExpiredError"
+    ) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authorized, token failed" });
+    }
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 const DESCRIPTION_MAX_LENGTH = 2000;
 
 export const updateUserDescription = async (req, res) => {

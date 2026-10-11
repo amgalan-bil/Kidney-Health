@@ -8,17 +8,27 @@ import {
 } from "../config/emailTemplates.js";
 
 export const register = async (req, res) => {
-  const { name, email, password } = req.body;
+  const name = typeof req.body.name === "string" ? req.body.name.trim() : "";
+  const email = typeof req.body.email === "string" ? req.body.email.trim() : "";
+  const { password } = req.body;
 
   if (!name || !email || !password) {
     return res.json({ success: false, message: "Missing Details" });
   }
 
   try {
-    const existingUser = await userModel.findOne({ email });
-
-    if (existingUser) {
-      return res.json({ success: false, message: "User already exists" });
+    // Each email and each name can belong to only one account.
+    if (await userModel.findByEmail(email)) {
+      return res.json({
+        success: false,
+        message: "An account with this email already exists.",
+      });
+    }
+    if (await userModel.isNameTaken(name)) {
+      return res.json({
+        success: false,
+        message: "That name is already taken. Please choose another.",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -72,7 +82,7 @@ export const login = async (req, res) => {
   }
 
   try {
-    const user = await userModel.findOne({ email });
+    const user = await userModel.findByEmail(email);
     if (!user) {
       return res.json({ success: false, message: "Invalid email" });
     }
@@ -213,7 +223,7 @@ export const sendResetOtp = async (req, res) => {
     return res.json({ success: false, message: "Email is required" });
   }
   try {
-    const user = await userModel.findOne({ email });
+    const user = await userModel.findByEmail(email);
     if (!user) {
       return res.json({ success: false, message: "User not found" });
     }
@@ -259,7 +269,7 @@ export const resetPassword = async (req, res) => {
   }
 
   try {
-    const user = await userModel.findOne({ email });
+    const user = await userModel.findByEmail(email);
 
     if (!user) {
       return res.json({ success: false, message: "User not found" });
