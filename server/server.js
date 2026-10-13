@@ -14,6 +14,7 @@ import connectDB from "./config/mongodb.js";
 import authRouter from "./routes/authRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import paymentRouter from "./routes/donationRoutes.js";
+import adminRouter from "./routes/adminRoutes.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -123,5 +124,6 @@ if (donorboxConfigured()) {
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/donation", paymentRouter);
+app.use("/api/v1/admin", adminRouter);
 
 startServer();
