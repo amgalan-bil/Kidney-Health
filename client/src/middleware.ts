@@ -22,8 +22,30 @@ const legacyPaths: Record<string, string> = {
   '/reset-password': '/reset-password',
 };
 
+/**
+ * The one address the site should be used from. The API only accepts sign-ups,
+ * sign-ins and payments from this address, so other production addresses of
+ * the same Vercel project (like an old *.vercel.app link shared in a chat)
+ * load the pages but fail with "Request failed (500)" on every form.
+ */
+const SITE_HOST = process.env.SITE_HOST || 'www.hopebridge.site';
+const IS_PRODUCTION =
+  (process.env.VERCEL_ENV || process.env.NEXT_PUBLIC_VERCEL_ENV) === 'production';
+
+/** Sends production visitors on a *.vercel.app address to the real site, keeping the page they asked for. */
+function toSiteHost(request: NextRequest) {
+  if (!IS_PRODUCTION) return null; // preview deployments keep their own addresses for testing
+  const host = (request.headers.get('host') ?? '').toLowerCase();
+  if (!host.endsWith('.vercel.app') || host === SITE_HOST) return null;
+  const { pathname, search } = request.nextUrl;
+  return NextResponse.redirect(`https://${SITE_HOST}${pathname}${search}`, 307);
+}
+
 /** Visitors without a language prefix go to /en or /mn based on their browser language. */
 export default function middleware(request: NextRequest) {
+  const moved = toSiteHost(request);
+  if (moved) return moved;
+
   const { pathname } = request.nextUrl;
 
   const firstSegment = pathname.split('/')[1] ?? '';
