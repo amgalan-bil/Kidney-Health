@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>HopeBridge Admin</title>
+<style>
+  :root { --ink:#15293a; --muted:#5d6b78; --line:#e3e8ec; --bg:#f6f8f9; --card:#fff; --accent:#d9705f; --ok:#2f7d5b; --warn:#b2541f; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  header { background:var(--ink); color:#fff; padding:14px 16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:17px; margin:0; flex:1; }
+  main { max-width:1100px; margin:0 auto; padding:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+  h2 { font-size:16px; margin:0 0 4px; }
+  p.hint { color:var(--muted); margin:0 0 12px; font-size:13px; }
+  input, select, button { font:inherit; }
+  input, select { padding:7px 9px; border:1px solid var(--line); border-radius:8px; background:#fff; max-width:100%; }
+  button { padding:7px 12px; border:0; border-radius:8px; background:var(--ink); color:#fff; cursor:pointer; white-space:nowrap; }
+  button.secondary { background:#fff; color:var(--ink); border:1px solid var(--line); }
+  button.accent { background:var(--accent); }
+  button:disabled { opacity:.5; cursor:default; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .tabs button { background:#fff; color:var(--ink); border:1px solid var(--line); }
+  .tabs button.on { background:var(--ink); color:#fff; }
+  .table-wrap { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.03em; }
+  td.num { white-space:nowrap; }
+  .msg { color:var(--muted); max-width:260px; }
+  .tag { font-size:11px; padding:2px 6px; border-radius:6px; background:var(--bg); border:1px solid var(--line); }
+  .status { margin:8px 0 0; font-size:13px; min-height:1.2em; }
+  .status.ok { color:var(--ok); } .status.err { color:var(--warn); }
+  .hidden { display:none; }
+  .moved { color:var(--muted); font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>HopeBridge · Admin</h1>
+  <div class="row" id="keyRow">
+    <input id="key" type="password" placeholder="Admin key" autocomplete="off" aria-label="Admin key">
+    <button id="unlock" class="accent">Unlock</button>
+  </div>
+  <button id="lock" class="secondary hidden">Lock</button>
+</header>
+
+<main>
+  <div id="locked" class="card">
+    <h2>Enter the admin key</h2>
+    <p class="hint">The key is set on the server as ADMIN_KEY. It stays in this browser tab only and is cleared when you close it.</p>
+    <p id="lockStatus" class="status"></p>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="card">
+      <h2>Gifts</h2>
+      <p class="hint">"General fund" lists paid gifts that aren't credited to any student. Pick the student and press Move. Check with the family first if you're not sure.</p>
+      <div class="row tabs" style="margin-bottom:10px">
+        <button data-scope="unassigned" class="on">General fund</button>
+        <button data-scope="all">All gifts</button>
+        <input id="search" placeholder="Search donor or message" style="flex:1;min-width:180px">
+        <button id="reload" class="secondary">Reload</button>
+        <button id="sync" class="secondary">Fetch new Donorbox gifts</button>
+      </div>
+      <p id="giftSummary" class="hint"></p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Donor</th><th>Amount</th><th>Message</th><th>Via</th><th>Credited to</th><th></th></tr></thead>
+        <tbody id="gifts"></tbody>
+      </table></div>
+      <p id="giftStatus" class="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>Totals check</h2>
+      <p class="hint">Compares each student's total on the site with the sum of their paid gifts. A difference can mean cash someone added by hand, so ask before fixing.</p>
+      <button id="checkTotals" class="secondary">Check totals</button>
+      <div class="table-wrap"><table id="totalsTable" class="hidden" style="margin-top:10px">
+        <thead><tr><th>Student</th><th>On site</th><th>From gifts</th><th>Difference</th><th></th></tr></thead>
+        <tbody id="totals"></tbody>
+      </table></div>
+      <p id="totalsStatus" class="status"></p>
+    </div>
+  </div>
+</main>
+
+<script>
+(() => {
+  const API = location.pathname.replace(/\/+$/, "");
+  const MNT_PER_USD = 3500;
+  const $ = (id) => document.getElementById(id);
+  let key = "";
+  try { key = sessionStorage.getItem("hb_admin_key") || ""; } catch {}
+  let scope = "unassigned";
+  let fundraisers = [];
+
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const mnt = (n) => "₮" + Math.round(n || 0).toLocaleString("en-US");
+  const usd = (n) => "$" + ((n || 0) / MNT_PER_USD).toLocaleString("en-US", { maximumFractionDigits: 2 });
+  const day = (d) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const say = (el, text, kind) => { el.textContent = text || ""; el.className = "status " + (kind || ""); };
+
+  async function api(path, opts = {}) {
+    const res = await fetch(API + path, {
+      ...opts,
+      headers: { "Content-Type": "application/json", "x-admin-key": key, ...(opts.headers || {}) },
+    });
+    let body = {};
+    try { body = await res.json(); } catch {}
+    if (!res.ok || body.success === false) {
+      const err = new Error(body.message || ("Request failed (" + res.status + ")"));
+      err.status = res.status;
+      throw err;
+    }
+    return body;
+  }
+
+  function showApp(on) {
+    $("app").classList.toggle("hidden", !on);
+    $("locked").classList.toggle("hidden", on);
+    $("keyRow").classList.toggle("hidden", on);
+    $("lock").classList.toggle("hidden", !on);
+  }
+
+  async function unlock() {
+    say($("lockStatus"), "Checking…");
+    try {
+      const { fundraisers: list } = await api("/fundraisers");
+      fundraisers = list;
+      try { sessionStorage.setItem("hb_admin_key", key); } catch {}
+      showApp(true);
+      say($("lockStatus"), "");
+      loadGifts();
+    } catch (e) {
+      showApp(false);
+      say($("lockStatus"), e.message, "err");
+    }
+  }
+
+  function studentOptions(selected) {
+    const opts = ['<option value="">General fund</option>'];
+    for (const f of fundraisers) {
+      opts.push('<option value="' + esc(f._id) + '"' + (String(selected) === String(f._id) ? " selected" : "") + ">" + esc(f.name) + "</option>");
+    }
+    return opts.join("");
+  }
+
+  async function loadGifts() {
+    const tbody = $("gifts");
+    tbody.innerHTML = '<tr><td colspan="7" class="msg">Loading…</td></tr>';
+    say($("giftStatus"), "");
+    try {
+      const q = new URLSearchParams({ scope, search: $("search").value.trim() });
+      const data = await api("/donations?" + q);
+      $("giftSummary").textContent = data.count + " gift(s) · " + mnt(data.totalAmount) + " (≈ " + usd(data.totalAmount) + ")" + (data.count >= 1000 ? " · showing newest 1000" : "");
+      if (!data.donations.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="msg">Nothing here.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.donations.map((d) => {
+        const current = d.userId ? d.userId._id : "";
+        const original = d.currency && d.originalAmount ? "<br><span class='moved'>" + esc(d.originalAmount) + " " + esc(d.currency) + "</span>" : "";
+        const history = (d.reassignments || []).length ? "<br><span class='moved'>moved " + d.reassignments.length + "×</span>" : "";
+        return "<tr data-id='" + esc(d._id) + "' data-current='" + esc(current) + "'>" +
+          "<td class='num'>" + day(d.createdAt) + "</td>" +
+          "<td>" + esc(d.name) + "</td>" +
+          "<td class='num'>" + mnt(d.amount) + "<br><span class='moved'>≈ " + usd(d.amount) + "</span>" + original + "</td>" +
+          "<td class='msg'>" + esc(d.message || "") + "</td>" +
+          "<td><span class='tag'>" + esc(d.source === "donorbox" ? "Donorbox" : "QPay") + "</span></td>" +
+          "<td><select aria-label='Student'>" + studentOptions(current) + "</select>" + history + "</td>" +
+          "<td><button class='move'>Move</button></td></tr>";
+      }).join("");
+    } catch (e) {
+      tbody.innerHTML = "";
+      say($("giftStatus"), e.message, "err");
+      if (e.status === 401) showApp(false);
+    }
+  }
+
+  async function moveGift(row, btn) {
+    const sel = row.querySelector("select");
+    const target = sel.value || null;
+    const current = row.dataset.current || null;
+    if ((target || null) === (current || null)) { say($("giftStatus"), "Pick a different student first.", "err"); return; }
+    const toName = target ? sel.options[sel.selectedIndex].text : "General fund";
+    const donor = row.children[1].textContent;
+    const amount = row.children[2].firstChild.textContent;
+    if (!confirm("Move " + amount + " from " + donor + " to " + toName + "?")) return;
+    btn.disabled = true;
+    try {
+      await api("/donations/" + row.dataset.id + "/assign", { method: "POST", body: JSON.stringify({ userId: target }) });
+      say($("giftStatus"), "Moved " + amount + " from " + donor + " to " + toName + ".", "ok");
+      const { fundraisers: list } = await api("/fundraisers");
+      fundraisers = list;
+      loadGifts().then(() => say($("giftStatus"), "Moved " + amount + " from " + donor + " to " + toName + ".", "ok"));
+    } catch (e) {
+      btn.disabled = false;
+      say($("giftStatus"), e.message, "err");
+    }
+  }
+
+  async function checkTotals() {
+    say($("totalsStatus"), "Checking…");
+    try {
+      const data = await api("/totals");
+      const tbody = $("totals");
+      $("totalsTable").classList.toggle("hidden", !data.mismatched.length);
+      tbody.innerHTML = data.mismatched.map((r) =>
+        "<tr data-id='" + esc(r._id) + "'><td>" + esc(r.name) + "</td>" +
+        "<td class='num'>" + mnt(r.shown) + "</td><td class='num'>" + mnt(r.fromGifts) + " <span class='moved'>(" + r.gifts + " gifts)</span></td>" +
+        "<td class='num'>" + (r.difference > 0 ? "+" : "") + mnt(r.difference) + "</td>" +
+        "<td><button class='fix secondary'>Set to " + mnt(r.fromGifts) + "</button></td></tr>"
+      ).join("");
+      say($("totalsStatus"), data.mismatched.length
+        ? data.mismatched.length + " of " + data.checked + " students don't match."
+        : "All " + data.checked + " totals match their gifts.", data.mismatched.length ? "err" : "ok");
+    } catch (e) { say($("totalsStatus"), e.message, "err"); }
+  }
+
+  async function fixTotal(row, btn) {
+    const name = row.children[0].textContent;
+    if (!confirm("Set " + name + "'s total to the sum of their paid gifts? Any amount added by hand will be removed.")) return;
+    btn.disabled = true;
+    try {
+      await api("/totals/fix", { method: "POST", body: JSON.stringify({ userId: row.dataset.id }) });
+      await checkTotals();
+    } catch (e) { btn.disabled = false; say($("totalsStatus"), e.message, "err"); }
+  }
+
+  $("unlock").onclick = () => { key = $("key").value.trim(); unlock(); };
+  $("key").addEventListener("keydown", (e) => { if (e.key === "Enter") $("unlock").click(); });
+  $("lock").onclick = () => { key = ""; try { sessionStorage.removeItem("hb_admin_key"); } catch {} $("key").value = ""; showApp(false); };
+  $("reload").onclick = loadGifts;
+  let t; $("search").addEventListener("input", () => { clearTimeout(t); t = setTimeout(loadGifts, 350); });
+  document.querySelectorAll(".tabs [data-scope]").forEach((b) => b.onclick = () => {
+    scope = b.dataset.scope;
+    document.querySelectorAll(".tabs [data-scope]").forEach((x) => x.classList.toggle("on", x === b));
+    loadGifts();
+  });
+  $("sync").onclick = async () => {
+    const btn = $("sync"); btn.disabled = true; say($("giftStatus"), "Fetching from Donorbox…");
+    try { const r = await api("/sync-donorbox", { method: "POST" }); await loadGifts(); say($("giftStatus"), r.recorded + " new Donorbox gift(s) recorded.", "ok"); }
+    catch (e) { say($("giftStatus"), e.message, "err"); }
+    btn.disabled = false;
+  };
+  $("gifts").addEventListener("click", (e) => { const b = e.target.closest("button.move"); if (b) moveGift(b.closest("tr"), b); });
+  $("totals").addEventListener("click", (e) => { const b = e.target.closest("button.fix"); if (b) fixTotal(b.closest("tr"), b); });
+  $("checkTotals").onclick = checkTotals;
+
+  if (key) unlock();
+})();
+</script>
+</body>
+</html>
