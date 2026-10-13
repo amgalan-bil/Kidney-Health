@@ -8,6 +8,8 @@ import {
   checkTotals,
   fixTotal,
   syncDonorboxNow,
+  addOfflineGift,
+  removeOfflineGift,
 } from "../controllers/adminController.js";
 
 const adminRouter = express.Router();
@@ -25,6 +27,8 @@ adminRouter.post("/donations/:id/assign", wrap(assignDonation));
 adminRouter.get("/totals", wrap(checkTotals));
 adminRouter.post("/totals/fix", wrap(fixTotal));
 adminRouter.post("/sync-donorbox", wrap(syncDonorboxNow));
+adminRouter.post("/offline", wrap(addOfflineGift));
+adminRouter.delete("/offline/:id", wrap(removeOfflineGift));
 
 // Keep admin errors as JSON for the page.
 adminRouter.use((error, req, res, next) => {
