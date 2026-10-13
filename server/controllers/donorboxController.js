@@ -61,9 +61,17 @@ const STUDENT_QUESTION = (
 
 const caseInsensitive = { locale: "en", strength: 2 };
 
-// The student the donor named on the Donorbox form, if any. Names are unique on
-// the site (ignoring case), so an exact name match is safe; anything else
-// ("General fund", a typo) returns null and the gift goes to the campaign.
+// A student's code in an answer like "Michelle R (HB-007)" or "hb7".
+const CODE_PATTERN = /\bHB[\s-]?0*(\d{1,4})\b/i;
+export const codeIn = (text) => {
+  const m = CODE_PATTERN.exec(String(text || ""));
+  return m ? `HB-${m[1].padStart(3, "0")}` : null;
+};
+
+// The student the donor picked on the Donorbox form, if any. The student's code
+// is checked first because it never changes; failing that, an exact name match
+// (names are unique on the site, ignoring case). Anything else ("General fund",
+// a typo) returns null and the gift goes to the campaign.
 const fundraiserFromAnswer = async (gift) => {
   const answers = (Array.isArray(gift.questions) ? gift.questions : [])
     .filter(
@@ -75,6 +83,15 @@ const fundraiserFromAnswer = async (gift) => {
     )
     .map((q) => q.answer.trim())
     .filter(Boolean);
+
+  for (const answer of answers) {
+    const code = codeIn(answer);
+    if (!code) continue;
+    const user = await userModel
+      .findOne({ donorCode: code, isFundraiser: true }, { _id: 1 })
+      .lean();
+    if (user) return user._id.toString();
+  }
 
   for (const name of answers) {
     const user = await userModel
@@ -160,11 +177,24 @@ const recordGift = async (gift) => {
 
 // Pulls gifts from the Donorbox API and records any we haven't seen. The very
 // first run reads the whole history, which backfills gifts made before this
-// existed; after that the last week is enough to catch a missed webhook.
+// existed. After that it reads back to a couple of days before the newest gift
+// already recorded (and never less than a week), so even a long outage of the
+// server or the webhook can't leave gifts behind.
+const DAY_MS = 24 * 60 * 60 * 1000;
 export const syncDonorboxDonations = async () => {
-  const seenAny = await donationModel.exists({ source: "donorbox" });
-  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const params = seenAny ? { date_from: since.toISOString().slice(0, 10) } : {};
+  await userModel.ensureDonorCodes();
+
+  const newest = await donationModel
+    .findOne({ source: "donorbox" }, { createdAt: 1 })
+    .sort({ createdAt: -1 })
+    .lean();
+  let params = {};
+  if (newest) {
+    const weekAgo = Date.now() - 7 * DAY_MS;
+    const fromNewest = new Date(newest.createdAt).getTime() - 2 * DAY_MS;
+    const since = new Date(Math.min(weekAgo, fromNewest));
+    params = { date_from: since.toISOString().slice(0, 10) };
+  }
 
   let recorded = 0;
   for (let page = 1; ; page++) {
