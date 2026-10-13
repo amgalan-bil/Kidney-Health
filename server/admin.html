@@ -35,6 +35,11 @@
   .status.ok { color:var(--ok); } .status.err { color:var(--warn); }
   .hidden { display:none; }
   .moved { color:var(--muted); font-size:12px; }
+  .suggest { display:inline-block; margin-top:4px; font-size:12px; color:#7a4a00; background:#fff4dc; border:1px solid #f0d9a6; border-radius:6px; padding:1px 6px; }
+  label { font-size:13px; color:var(--muted); display:flex; flex-direction:column; gap:4px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; align-items:end; }
+  textarea { font:13px/1.5 ui-monospace,Menlo,monospace; width:100%; min-height:140px; padding:8px; border:1px solid var(--line); border-radius:8px; }
+  button.danger { background:#fff; color:var(--warn); border:1px solid #efc9b5; }
 </style>
 </head>
 <body>
@@ -57,7 +62,7 @@
   <div id="app" class="hidden">
     <div class="card">
       <h2>Gifts</h2>
-      <p class="hint">"General fund" lists paid gifts that aren't credited to any student. Pick the student and press Move. Check with the family first if you're not sure.</p>
+      <p class="hint">"General fund" lists paid gifts that aren't credited to any student. Where a gift's message names a student, that student is pre-selected and marked <span class="suggest">Suggested</span>; it is only a guess until you press Move. Check with the family if you're not sure.</p>
       <div class="row tabs" style="margin-bottom:10px">
         <button data-scope="unassigned" class="on">General fund</button>
         <button data-scope="all">All gifts</button>
@@ -67,10 +72,32 @@
       </div>
       <p id="giftSummary" class="hint"></p>
       <div class="table-wrap"><table>
-        <thead><tr><th>Date</th><th>Donor</th><th>Amount</th><th>Message</th><th>Via</th><th>Credited to</th><th></th></tr></thead>
+        <thead><tr><th>Date</th><th>Donor</th><th>Amount</th><th>Message</th><th>Via</th><th>Student (move to)</th><th></th></tr></thead>
         <tbody id="gifts"></tbody>
       </table></div>
       <p id="giftStatus" class="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>Record an offline gift</h2>
+      <p class="hint">For money collected outside the site: cash, bake sales, bank transfers. It counts toward the student's total and shows on their page. Only record money that has actually reached the campaign account.</p>
+      <div class="grid">
+        <label>Student<select id="offStudent"></select></label>
+        <label>Amount<input id="offAmount" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 50000"></label>
+        <label>Currency<select id="offCurrency"><option value="MNT">₮ MNT</option><option value="USD">$ USD</option></select></label>
+        <label>From<input id="offName" placeholder="Cash" maxlength="100"></label>
+        <label>Note<input id="offMessage" placeholder="e.g. Bake sale Oct 5" maxlength="500"></label>
+        <label>Date<input id="offDate" type="date"></label>
+      </div>
+      <div style="margin-top:10px"><button id="offAdd" class="accent">Record gift</button></div>
+      <p id="offStatus" class="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>Donorbox student list</h2>
+      <p class="hint">In Donorbox, add a required dropdown question whose wording includes the word "student", e.g. "Which student are you supporting? / Аль сурагчийг дэмжих вэ?". Paste these lines as its options. Each student's code (HB-…) never changes, so renaming a student won't break anything. When new students join, copy the list again.</p>
+      <textarea id="dbxList" readonly></textarea>
+      <div class="row" style="margin-top:8px"><button id="dbxCopy" class="secondary">Copy list</button><span id="dbxStatus" class="moved"></span></div>
     </div>
 
     <div class="card">
@@ -129,6 +156,7 @@
     try {
       const { fundraisers: list } = await api("/fundraisers");
       fundraisers = list;
+      refreshStudentLists();
       try { sessionStorage.setItem("hb_admin_key", key); } catch {}
       showApp(true);
       say($("lockStatus"), "");
@@ -142,9 +170,15 @@
   function studentOptions(selected) {
     const opts = ['<option value="">General fund</option>'];
     for (const f of fundraisers) {
-      opts.push('<option value="' + esc(f._id) + '"' + (String(selected) === String(f._id) ? " selected" : "") + ">" + esc(f.name) + "</option>");
+      opts.push('<option value="' + esc(f._id) + '"' + (String(selected) === String(f._id) ? " selected" : "") + ">" + esc(f.name) + (f.donorCode ? " · " + esc(f.donorCode) : "") + "</option>");
     }
     return opts.join("");
+  }
+
+  function refreshStudentLists() {
+    $("offStudent").innerHTML = studentOptions($("offStudent").value);
+    const lines = ["General fund"].concat(fundraisers.map((f) => f.name + (f.donorCode ? " (" + f.donorCode + ")" : "")));
+    $("dbxList").value = lines.join("\n");
   }
 
   async function loadGifts() {
@@ -161,16 +195,20 @@
       }
       tbody.innerHTML = data.donations.map((d) => {
         const current = d.userId ? d.userId._id : "";
-        const original = d.currency && d.originalAmount ? "<br><span class='moved'>" + esc(d.originalAmount) + " " + esc(d.currency) + "</span>" : "";
+        const pick = current || (d.suggestion ? d.suggestion._id : "");
+        const hint = !current && d.suggestion ? "<br><span class='suggest' title='" + esc(d.suggestion.why) + "'>Suggested: " + esc(d.suggestion.name) + " (" + esc(d.suggestion.why) + ")</span>" : "";
+        const via = d.source === "donorbox" ? "Donorbox" : d.source === "offline" ? "Offline" : "QPay";
+        const remove = d.source === "offline" ? " <button class='remove danger'>Remove</button>" : "";
+        const original = d.currency && d.currency !== "MNT" && d.originalAmount ? "<br><span class='moved'>" + esc(d.originalAmount) + " " + esc(d.currency) + "</span>" : "";
         const history = (d.reassignments || []).length ? "<br><span class='moved'>moved " + d.reassignments.length + "×</span>" : "";
         return "<tr data-id='" + esc(d._id) + "' data-current='" + esc(current) + "'>" +
           "<td class='num'>" + day(d.createdAt) + "</td>" +
           "<td>" + esc(d.name) + "</td>" +
           "<td class='num'>" + mnt(d.amount) + "<br><span class='moved'>≈ " + usd(d.amount) + "</span>" + original + "</td>" +
           "<td class='msg'>" + esc(d.message || "") + "</td>" +
-          "<td><span class='tag'>" + esc(d.source === "donorbox" ? "Donorbox" : "QPay") + "</span></td>" +
-          "<td><select aria-label='Student'>" + studentOptions(current) + "</select>" + history + "</td>" +
-          "<td><button class='move'>Move</button></td></tr>";
+          "<td><span class='tag'>" + via + "</span></td>" +
+          "<td><select aria-label='Student'>" + studentOptions(pick) + "</select>" + hint + history + "</td>" +
+          "<td class='num'><button class='move'>Move</button>" + remove + "</td></tr>";
       }).join("");
     } catch (e) {
       tbody.innerHTML = "";
@@ -194,6 +232,7 @@
       say($("giftStatus"), "Moved " + amount + " from " + donor + " to " + toName + ".", "ok");
       const { fundraisers: list } = await api("/fundraisers");
       fundraisers = list;
+      refreshStudentLists();
       loadGifts().then(() => say($("giftStatus"), "Moved " + amount + " from " + donor + " to " + toName + ".", "ok"));
     } catch (e) {
       btn.disabled = false;
@@ -245,7 +284,54 @@
     catch (e) { say($("giftStatus"), e.message, "err"); }
     btn.disabled = false;
   };
-  $("gifts").addEventListener("click", (e) => { const b = e.target.closest("button.move"); if (b) moveGift(b.closest("tr"), b); });
+  $("gifts").addEventListener("click", (e) => {
+    const b = e.target.closest("button.move"); if (b) return moveGift(b.closest("tr"), b);
+    const r = e.target.closest("button.remove"); if (r) return removeOffline(r.closest("tr"), r);
+  });
+
+  async function removeOffline(row, btn) {
+    const donor = row.children[1].textContent;
+    const amount = row.children[2].firstChild.textContent;
+    if (!confirm("Remove the offline gift " + amount + " from " + donor + "? Use this only for a gift recorded by mistake.")) return;
+    btn.disabled = true;
+    try {
+      await api("/offline/" + row.dataset.id, { method: "DELETE" });
+      const { fundraisers: list } = await api("/fundraisers");
+      fundraisers = list; refreshStudentLists();
+      await loadGifts();
+      say($("giftStatus"), "Removed " + amount + " from " + donor + ".", "ok");
+    } catch (e) { btn.disabled = false; say($("giftStatus"), e.message, "err"); }
+  }
+
+  try { $("offDate").value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10); } catch {}
+  $("offAdd").onclick = async () => {
+    const sel = $("offStudent");
+    const userId = sel.value || null;
+    const who = userId ? sel.options[sel.selectedIndex].text : "General fund";
+    const amount = Number($("offAmount").value);
+    const currency = $("offCurrency").value;
+    if (!(amount > 0)) { say($("offStatus"), "Enter an amount above zero.", "err"); return; }
+    const shown = currency === "USD" ? "$" + amount.toLocaleString("en-US") : mnt(amount);
+    if (!confirm("Record " + shown + " for " + who + "?")) return;
+    const btn = $("offAdd"); btn.disabled = true;
+    try {
+      await api("/offline", { method: "POST", body: JSON.stringify({
+        userId, amount, currency,
+        name: $("offName").value.trim(), message: $("offMessage").value.trim(), date: $("offDate").value || undefined,
+      }) });
+      say($("offStatus"), "Recorded " + shown + " for " + who + ".", "ok");
+      $("offAmount").value = ""; $("offMessage").value = "";
+      const { fundraisers: list } = await api("/fundraisers");
+      fundraisers = list; refreshStudentLists();
+      loadGifts();
+    } catch (e) { say($("offStatus"), e.message, "err"); }
+    btn.disabled = false;
+  };
+
+  $("dbxCopy").onclick = async () => {
+    try { await navigator.clipboard.writeText($("dbxList").value); $("dbxStatus").textContent = "Copied."; }
+    catch { $("dbxList").select(); $("dbxStatus").textContent = "Press Cmd/Ctrl+C to copy."; }
+  };
   $("totals").addEventListener("click", (e) => { const b = e.target.closest("button.fix"); if (b) fixTotal(b.closest("tr"), b); });
   $("checkTotals").onclick = checkTotals;
 
