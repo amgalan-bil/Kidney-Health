@@ -59,6 +59,15 @@ const donationSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
+    // History of admin moves between students (null = General fund).
+    reassignments: [
+      {
+        _id: false,
+        from: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+        to: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+        at: { type: Date },
+      },
+    ],
   },
   {
     timestamps: true,
