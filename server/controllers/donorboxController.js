@@ -50,12 +50,55 @@ const toMnt = (gift) => {
   return null;
 };
 
-// The site tags each Donorbox link with utm_content=<fundraiser id>. Anything
-// else, or a fundraiser that no longer exists, goes to the campaign.
+// Which Donorbox form question asks for the student. Matched loosely against
+// the question text; set DONORBOX_STUDENT_QUESTION to override.
+const STUDENT_QUESTION = (
+  process.env.DONORBOX_STUDENT_QUESTION || "student|сурагч"
+)
+  .split("|")
+  .map((s) => s.trim().toLowerCase())
+  .filter(Boolean);
+
+const caseInsensitive = { locale: "en", strength: 2 };
+
+// The student the donor named on the Donorbox form, if any. Names are unique on
+// the site (ignoring case), so an exact name match is safe; anything else
+// ("General fund", a typo) returns null and the gift goes to the campaign.
+const fundraiserFromAnswer = async (gift) => {
+  const answers = (Array.isArray(gift.questions) ? gift.questions : [])
+    .filter(
+      (q) =>
+        typeof q?.answer === "string" &&
+        STUDENT_QUESTION.some((word) =>
+          String(q.question || "").toLowerCase().includes(word)
+        )
+    )
+    .map((q) => q.answer.trim())
+    .filter(Boolean);
+
+  for (const name of answers) {
+    const user = await userModel
+      .findOne({ name, isFundraiser: true }, { _id: 1 })
+      .collation(caseInsensitive)
+      .lean();
+    if (user) return user._id.toString();
+  }
+  return null;
+};
+
+// The site tags each Donorbox link with utm_content=<fundraiser id>. When that
+// tag is missing (a shared or shortened link), fall back to the student the
+// donor picked on the Donorbox form. Otherwise the gift goes to the campaign.
 const fundraiserFor = async (gift) => {
   const id = gift.utm_content;
-  if (!id || !mongoose.isValidObjectId(id)) return null;
-  return (await userModel.exists({ _id: id, isFundraiser: true })) ? id : null;
+  if (
+    id &&
+    mongoose.isValidObjectId(id) &&
+    (await userModel.exists({ _id: id, isFundraiser: true }))
+  ) {
+    return id;
+  }
+  return fundraiserFromAnswer(gift);
 };
 
 const donorName = (gift) => {
