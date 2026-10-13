@@ -29,10 +29,12 @@ const donationSchema = new mongoose.Schema(
       enum: ["pending", "paid", "failed"],
       default: "pending",
     },
-    // How it was paid: QPay from Mongolia, or a card on Donorbox from abroad.
+    // How it was paid: QPay from Mongolia, a card on Donorbox from abroad, or
+    // money collected outside the site (cash, bake sale, bank transfer) that an
+    // admin recorded by hand.
     source: {
       type: String,
-      enum: ["qpay", "donorbox"],
+      enum: ["qpay", "donorbox", "offline"],
       default: "qpay",
     },
     // Donorbox's donation ID; unique so a gift seen twice is stored once.
@@ -59,6 +61,15 @@ const donationSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
+    // History of admin moves between students (null = General fund).
+    reassignments: [
+      {
+        _id: false,
+        from: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+        to: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+        at: { type: Date },
+      },
+    ],
   },
   {
     timestamps: true,
