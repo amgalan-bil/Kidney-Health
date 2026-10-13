@@ -5,9 +5,13 @@ import mongoose from "mongoose";
 import userModel from "../models/userModel.js";
 import donationModel from "../models/donationModel.js";
 import {
+  codeIn,
   donorboxConfigured,
   syncDonorboxDonations,
 } from "./donorboxController.js";
+
+// Must match MNT_PER_USD in donorboxController.js and client/src/lib/utils.ts.
+const MNT_PER_USD = 3_500;
 
 // --- Admin access ---
 // Every admin call must send the ADMIN_KEY (set on the server) in the
@@ -47,11 +51,55 @@ export const adminPage = (req, res) => {
 // --- Lists ---
 
 export const listFundraisers = async (req, res) => {
+  await userModel.ensureDonorCodes();
   const users = await userModel
-    .find({ isFundraiser: true }, { name: 1, totalDonatedAmount: 1 })
+    .find({ isFundraiser: true }, { name: 1, totalDonatedAmount: 1, donorCode: 1 })
     .sort({ name: 1 })
     .lean();
   res.json({ success: true, fundraisers: users });
+};
+
+// --- Suggestions for General-fund gifts ---
+// Looks for a student's code or name in the gift's message (or a donor name
+// that is exactly a student's name). Only a single, clear match is suggested;
+// an admin still has to confirm every move.
+const normalize = (s) =>
+  ` ${String(s || "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()} `;
+
+const buildMatcher = (fundraisers) => {
+  const byCode = new Map(fundraisers.filter((f) => f.donorCode).map((f) => [f.donorCode, f]));
+  const people = fundraisers
+    .map((f) => ({ f, full: normalize(f.name), first: normalize(f.name).trim().split(" ")[0] }))
+    .filter((p) => p.full.trim());
+  const firstCounts = new Map();
+  for (const p of people) firstCounts.set(p.first, (firstCounts.get(p.first) || 0) + 1);
+
+  return (donation) => {
+    const code = codeIn(donation.message);
+    if (code && byCode.has(code)) {
+      return { f: byCode.get(code), why: `message has ${code}` };
+    }
+
+    const msg = normalize(donation.message);
+    const full = people.filter((p) => msg.includes(p.full));
+    if (full.length === 1) return { f: full[0].f, why: "name in message" };
+    if (full.length > 1) return null;
+
+    const first = people.filter(
+      (p) => p.first.length >= 4 && firstCounts.get(p.first) === 1 && msg.includes(` ${p.first} `)
+    );
+    if (first.length === 1) return { f: first[0].f, why: "first name in message" };
+    if (first.length > 1) return null;
+
+    const donor = normalize(donation.name);
+    const same = people.filter((p) => donor === p.full);
+    if (same.length === 1) return { f: same[0].f, why: "donor name is a student's name" };
+    return null;
+  };
 };
 
 // Paid gifts, newest first. ?scope=unassigned (default) shows the General-fund
@@ -86,6 +134,19 @@ export const listDonations = async (req, res) => {
     .limit(1000)
     .populate("userId", "name")
     .lean();
+
+  // Suggest a student for gifts still in the General fund.
+  const unassigned = donations.filter((d) => !d.userId);
+  if (unassigned.length) {
+    const fundraisers = await userModel
+      .find({ isFundraiser: true }, { name: 1, donorCode: 1 })
+      .lean();
+    const suggest = buildMatcher(fundraisers);
+    for (const d of unassigned) {
+      const hit = suggest(d);
+      if (hit) d.suggestion = { _id: hit.f._id, name: hit.f.name, why: hit.why };
+    }
+  }
 
   const totalAmount = donations.reduce((sum, d) => sum + (d.amount || 0), 0);
   res.json({ success: true, scope, count: donations.length, totalAmount, donations });
@@ -154,6 +215,93 @@ export const assignDonation = async (req, res) => {
     `Admin moved gift ${id} (${donation.amount}₮) from ${from || "general fund"} to ${target || "general fund"}.`
   );
   res.json({ success: true, message: "Gift moved.", donation: moved });
+};
+
+// --- Offline gifts (cash, bake sales, bank transfers) ---
+// Recorded as paid gifts so they show on the student's page and the Totals
+// check stays accurate. Body: { userId|null, amount, currency: "MNT"|"USD",
+// name, message, date }.
+const MAX_OFFLINE_MNT = 50_000_000; // a typo guard, about $14,000
+
+export const addOfflineGift = async (req, res) => {
+  const { userId = null, amount, currency = "MNT", name, message, date } = req.body || {};
+
+  if (userId && !mongoose.isValidObjectId(userId)) {
+    return res.status(400).json({ success: false, message: "Invalid student id." });
+  }
+  const value = Number(amount);
+  if (!Number.isFinite(value) || value <= 0) {
+    return res.status(400).json({ success: false, message: "Enter an amount above zero." });
+  }
+  const cur = String(currency).toUpperCase();
+  if (cur !== "MNT" && cur !== "USD") {
+    return res.status(400).json({ success: false, message: "Currency must be MNT or USD." });
+  }
+  const mnt = Math.round(cur === "USD" ? value * MNT_PER_USD : value);
+  if (mnt > MAX_OFFLINE_MNT) {
+    return res.status(400).json({
+      success: false,
+      message: "That amount is unusually large. Check it, or record it in parts.",
+    });
+  }
+  const label = typeof name === "string" && name.trim() ? name.trim().slice(0, 100) : "Cash";
+  // A plain date ("2026-10-05") is taken as midday UTC so it shows as that same
+  // day in Mongolia and in the US.
+  const givenAt = !date
+    ? new Date()
+    : /^\d{4}-\d{2}-\d{2}$/.test(String(date))
+      ? new Date(`${date}T12:00:00Z`)
+      : new Date(date);
+  if (Number.isNaN(givenAt.getTime()) || givenAt.getTime() > Date.now() + 86_400_000) {
+    return res.status(400).json({ success: false, message: "Invalid date." });
+  }
+  if (userId && !(await userModel.exists({ _id: userId, isFundraiser: true }))) {
+    return res.status(404).json({ success: false, message: "Student fundraiser not found." });
+  }
+
+  const [gift] = await donationModel.create(
+    [
+      {
+        source: "offline",
+        status: "paid",
+        userId,
+        amount: mnt,
+        currency: cur,
+        originalAmount: value,
+        name: label,
+        message: typeof message === "string" && message.trim() ? message.trim().slice(0, 500) : undefined,
+        createdAt: givenAt,
+        updatedAt: givenAt,
+      },
+    ],
+    { timestamps: false }
+  );
+
+  if (userId) {
+    await userModel.findByIdAndUpdate(userId, { $inc: { totalDonatedAmount: mnt } });
+  }
+  console.log(`Admin recorded offline gift ${gift._id} (${mnt}₮) for ${userId || "general fund"}.`);
+  res.json({ success: true, donation: gift });
+};
+
+// Removes an offline gift entered by mistake. Only offline gifts can be removed;
+// QPay and Donorbox gifts are real payments and stay.
+export const removeOfflineGift = async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ success: false, message: "Invalid gift id." });
+  }
+  const gift = await donationModel.findOneAndDelete({ _id: id, source: "offline", status: "paid" });
+  if (!gift) {
+    return res.status(404).json({ success: false, message: "Offline gift not found." });
+  }
+  if (gift.userId) {
+    await userModel.findByIdAndUpdate(gift.userId, {
+      $inc: { totalDonatedAmount: -gift.amount },
+    });
+  }
+  console.log(`Admin removed offline gift ${id} (${gift.amount}₮).`);
+  res.json({ success: true });
 };
 
 // --- Totals check ---
