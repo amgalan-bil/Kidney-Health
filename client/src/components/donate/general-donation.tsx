@@ -9,11 +9,24 @@ import { Reveal } from '@/components/reveal';
 import { useAccount } from '@/components/account/account-provider';
 import { DonateCard } from './donate-card';
 
-const GENERAL = '';
+const NONE = '';
+const GENERAL = 'general-fund';
+
+/** Shown until the donor picks someone, so nobody lands in the general fund by default. */
+const pickCopy: Record<Locale, { choose: string; hint: string }> = {
+  en: {
+    choose: 'Choose a student…',
+    hint: 'Pick the student you are supporting. If you are not sure, choose General fund at the bottom of the list.',
+  },
+  mn: {
+    choose: 'Сурагчаа сонгоно уу…',
+    hint: 'Дэмжих сурагчаа сонгоно уу. Мэдэхгүй бол жагсаалтын хамгийн доор байгаа Ерөнхий санг сонгоорой.',
+  },
+};
 
 /**
  * Donate from the landing page without opening a fundraiser first: pick a
- * student from the list, or leave it on the general fund.
+ * student from the list, or the general fund at the end of it.
  */
 export function GeneralDonation({
   t,
@@ -25,8 +38,9 @@ export function GeneralDonation({
   fundraisers: Fundraiser[];
 }) {
   const { account } = useAccount();
-  const [recipientId, setRecipientId] = useState(GENERAL);
+  const [recipientId, setRecipientId] = useState(NONE);
   const copy = t.generalDonation;
+  const pick = pickCopy[locale] ?? pickCopy.en;
 
   // You can't give to your own fundraiser, so don't offer it.
   const options = fundraisers.filter((fundraiser) => fundraiser._id !== account?.userId);
@@ -46,7 +60,9 @@ export function GeneralDonation({
             onChange={(event) => setRecipientId(event.target.value)}
             className="h-12 w-full appearance-none rounded-xl border border-input bg-white pr-11 pl-4 text-base text-ink shadow-[0_1px_2px_rgb(23_43_58/0.04)] transition-[border-color,box-shadow] outline-none focus-visible:border-teal focus-visible:ring-4 focus-visible:ring-teal/15"
           >
-            <option value={GENERAL}>{copy.general}</option>
+            <option value={NONE} disabled>
+              {pick.choose}
+            </option>
             {options.length > 0 && (
               <optgroup label={copy.studentsGroup}>
                 {options.map((fundraiser) => (
@@ -56,23 +72,30 @@ export function GeneralDonation({
                 ))}
               </optgroup>
             )}
+            <option value={GENERAL}>{copy.general}</option>
           </select>
           <ChevronDown className="pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2 text-ink-muted" />
         </span>
       </label>
       <p className="mt-2 text-sm text-ink-muted">
-        {chosen ? fill(copy.fundraiserNote, { name: chosen.name }) : copy.generalNote}
+        {chosen
+          ? fill(copy.fundraiserNote, { name: chosen.name })
+          : recipientId === GENERAL
+            ? copy.generalNote
+            : pick.hint}
       </p>
 
-      <div className="mt-8 rounded-[1.5rem] bg-paper p-5 sm:p-7">
-        {/* Keyed so switching recipient starts a fresh form rather than reusing an invoice. */}
-        <DonateCard
-          key={recipientId}
-          t={t}
-          locale={locale}
-          fundraiser={chosen ? { id: chosen._id, name: chosen.name } : undefined}
-        />
-      </div>
+      {recipientId !== NONE && (
+        <div className="mt-8 rounded-[1.5rem] bg-paper p-5 sm:p-7">
+          {/* Keyed so switching recipient starts a fresh form rather than reusing an invoice. */}
+          <DonateCard
+            key={recipientId}
+            t={t}
+            locale={locale}
+            fundraiser={chosen ? { id: chosen._id, name: chosen.name } : undefined}
+          />
+        </div>
+      )}
     </Reveal>
   );
 }
