@@ -59,6 +59,61 @@ export const listFundraisers = async (req, res) => {
   res.json({ success: true, fundraisers: users });
 };
 
+// --- Accounts ---
+// Finds sign-ups by name or email, including people who never started a
+// fundraiser (they don't appear anywhere else). Emails are partly hidden: enough
+// to tell two people apart, not enough to copy.
+const maskEmail = (email) => {
+  const [user = "", domain = ""] = String(email || "").split("@");
+  return (user.length <= 2 ? user[0] || "" : user.slice(0, 2)) + "***@" + domain;
+};
+
+export const findAccounts = async (req, res) => {
+  const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
+  if (search.length < 2) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Type at least 2 letters of a name or email." });
+  }
+  const safe = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const users = await userModel
+    .find(
+      { $or: [{ name: { $regex: safe, $options: "i" } }, { email: { $regex: safe, $options: "i" } }] },
+      { name: 1, email: 1, isFundraiser: 1, donorCode: 1, totalDonatedAmount: 1, createdAt: 1 }
+    )
+    .sort({ createdAt: -1 })
+    .limit(25)
+    .lean();
+  res.json({
+    success: true,
+    accounts: users.map((u) => ({
+      _id: u._id,
+      name: u.name,
+      email: maskEmail(u.email),
+      isFundraiser: Boolean(u.isFundraiser),
+      donorCode: u.donorCode || null,
+      totalDonatedAmount: u.totalDonatedAmount || 0,
+      createdAt: u.createdAt,
+    })),
+  });
+};
+
+// Starts the fundraiser page for a student who signed up but got stuck before
+// pressing "Start my fundraiser". Same effect as them pressing it.
+export const startFundraiserFor = async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ success: false, message: "Unknown account." });
+  }
+  const user = await userModel.findByIdAndUpdate(id, { isFundraiser: true }, { new: true });
+  if (!user) {
+    return res.status(404).json({ success: false, message: "Unknown account." });
+  }
+  await userModel.ensureDonorCodes();
+  const fresh = await userModel.findById(id, { name: 1, donorCode: 1 }).lean();
+  res.json({ success: true, account: { _id: fresh._id, name: fresh.name, donorCode: fresh.donorCode || null } });
+};
+
 // --- Suggestions for General-fund gifts ---
 // Looks for a student's code or name in the gift's message (or a donor name
 // that is exactly a student's name). Only a single, clear match is suggested;
