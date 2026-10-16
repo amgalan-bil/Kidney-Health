@@ -185,6 +185,8 @@ export const en = {
     nameLabel: 'Your name',
     emailLabel: 'Email',
     passwordLabel: 'Password',
+    studentLabel: "I'm a student: create my fundraising page",
+    studentHint: 'Untick this if you only want an account. You can start a page any time.',
     signInSubmit: 'Sign in',
     signUpSubmit: 'Create account',
     forgot: 'Forgot your password?',
@@ -197,6 +199,8 @@ export const en = {
       email: 'Please enter your email address.',
       password: 'Your password needs at least 8 characters.',
       generic: 'That did not work. Please check your details and try again.',
+      exists: 'An account with this email already exists. Please sign in instead:',
+      noAccount: 'No account uses this email yet. Check the spelling, or sign up:',
     },
   },
   reset: {
