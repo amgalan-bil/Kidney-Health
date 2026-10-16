@@ -94,6 +94,20 @@
     </div>
 
     <div class="card">
+      <h2>Find an account</h2>
+      <p class="hint">Search everyone who has signed up, including students who never started a fundraiser (they don't show anywhere else). If a student is stuck, press "Start their page": it does the same as them pressing "Start my fundraiser". New pages get an HB code; add it to the Donorbox list below.</p>
+      <div class="row">
+        <input id="accSearch" placeholder="Name or email" style="flex:1;min-width:180px">
+        <button id="accFind" class="secondary">Search</button>
+      </div>
+      <div class="table-wrap"><table id="accTable" class="hidden" style="margin-top:10px">
+        <thead><tr><th>Name</th><th>Email</th><th>Signed up</th><th>Fundraiser page</th><th></th></tr></thead>
+        <tbody id="accounts"></tbody>
+      </table></div>
+      <p id="accStatus" class="status"></p>
+    </div>
+
+    <div class="card">
       <h2>Donorbox student list</h2>
       <p class="hint">In Donorbox, add a required dropdown question whose wording includes the word "student", e.g. "Which student are you supporting? / Аль сурагчийг дэмжих вэ?". Paste these lines as its options. Each student's code (HB-…) never changes, so renaming a student won't break anything. When new students join, copy the list again.</p>
       <textarea id="dbxList" readonly></textarea>
@@ -327,6 +341,39 @@
     } catch (e) { say($("offStatus"), e.message, "err"); }
     btn.disabled = false;
   };
+
+  async function findAccounts() {
+    const q = $("accSearch").value.trim();
+    if (q.length < 2) { say($("accStatus"), "Type at least 2 letters of a name or email.", "err"); return; }
+    say($("accStatus"), "Searching…");
+    try {
+      const { accounts } = await api("/accounts?" + new URLSearchParams({ search: q }));
+      $("accTable").classList.toggle("hidden", !accounts.length);
+      $("accounts").innerHTML = accounts.map((a) =>
+        "<tr data-id='" + esc(a._id) + "'><td>" + esc(a.name) + "</td><td>" + esc(a.email) + "</td><td class='num'>" + day(a.createdAt) + "</td>" +
+        "<td>" + (a.isFundraiser ? "Yes" + (a.donorCode ? " · " + esc(a.donorCode) : "") + " <span class='moved'>" + mnt(a.totalDonatedAmount) + "</span>" : "<span class='suggest'>Not started</span>") + "</td>" +
+        "<td class='num'>" + (a.isFundraiser ? "" : "<button class='start accent'>Start their page</button>") + "</td></tr>"
+      ).join("");
+      say($("accStatus"), accounts.length ? accounts.length + " account(s) found" + (accounts.length >= 25 ? " (showing newest 25)" : "") + "." : "No account matches “" + q + "”. They may not have finished signing up.", accounts.length ? "ok" : "err");
+    } catch (e) { say($("accStatus"), e.message, "err"); }
+  }
+
+  async function startPage(row, btn) {
+    const name = row.children[0].textContent;
+    if (!confirm("Start a fundraiser page for " + name + "? Only do this for a student taking part.")) return;
+    btn.disabled = true;
+    try {
+      const { account } = await api("/accounts/" + row.dataset.id + "/start", { method: "POST" });
+      const { fundraisers: list } = await api("/fundraisers");
+      fundraisers = list; refreshStudentLists();
+      await findAccounts();
+      say($("accStatus"), "Started " + account.name + "'s page" + (account.donorCode ? " (" + account.donorCode + "). Add “" + account.name + " (" + account.donorCode + ")” to the Donorbox list." : "."), "ok");
+    } catch (e) { btn.disabled = false; say($("accStatus"), e.message, "err"); }
+  }
+
+  $("accFind").onclick = findAccounts;
+  $("accSearch").addEventListener("keydown", (e) => { if (e.key === "Enter") findAccounts(); });
+  $("accounts").addEventListener("click", (e) => { const b = e.target.closest("button.start"); if (b) startPage(b.closest("tr"), b); });
 
   $("dbxCopy").onclick = async () => {
     try { await navigator.clipboard.writeText($("dbxList").value); $("dbxStatus").textContent = "Copied."; }
