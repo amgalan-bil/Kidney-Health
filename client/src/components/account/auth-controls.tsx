@@ -25,10 +25,13 @@ export function AuthControls({ locale, t }: { locale: Locale; t: Dictionary }) {
     const next = pathname ? `?next=${encodeURIComponent(pathname)}` : '';
     return (
       <>
-        <Button asChild variant="ghost" size="sm">
+        {/* Phones only have room for one button. Sign up wins there, since most
+            students sign up from their phone; the sign-up form links to sign-in,
+            and says so outright if the email already has an account. */}
+        <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
           <Link href={`/${locale}/sign-in${next}`}>{t.nav.signIn}</Link>
         </Button>
-        <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
+        <Button asChild variant="outline" size="sm">
           <Link href={`/${locale}/sign-up`}>{t.nav.signUp}</Link>
         </Button>
       </>
