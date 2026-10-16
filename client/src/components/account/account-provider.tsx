@@ -18,12 +18,13 @@ type AccountState = {
   /** The signed-in person's fundraiser record, once loaded. */
   account: Account | null;
   status: Status;
-  reload: () => Promise<void>;
+  reload: () => Promise<Account | null>;
   updateGoal: (goal: number) => Promise<void>;
   updateName: (name: string) => Promise<void>;
   startFundraiser: () => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (name: string, email: string, password: string) => Promise<void>;
+  /** Both resolve to the signed-in account, so callers can tell where to send them next. */
+  signIn: (email: string, password: string) => Promise<Account | null>;
+  signUp: (name: string, email: string, password: string) => Promise<Account | null>;
   signOut: () => Promise<void>;
 };
 
@@ -44,10 +45,12 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       const { userData } = await getAccount();
       setAccount(userData);
       setStatus('ready');
+      return userData;
     } catch {
       // A rejected request here just means nobody is signed in on this browser.
       setAccount(null);
       setStatus('signed-out');
+      return null;
     }
   }, []);
 
@@ -58,7 +61,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(
     async (email: string, password: string) => {
       await apiLogin(email, password);
-      await reload();
+      return reload();
     },
     [reload],
   );
@@ -66,7 +69,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const signUp = useCallback(
     async (name: string, email: string, password: string) => {
       await apiRegister(name, email, password);
-      await reload();
+      return reload();
     },
     [reload],
   );
